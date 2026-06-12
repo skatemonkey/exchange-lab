@@ -53,7 +53,7 @@ public class Order {
         this.quantity = quantity;
         this.submittedAt = Objects.requireNonNull(submittedAt);
         this.filledQuantity = BigDecimal.ZERO;
-        this.status = Status.SUBMITTED;
+        this.status = Status.OPEN;
     }
 
     // ---------------------------------------------------------------------
@@ -76,20 +76,6 @@ public class Order {
                 quantity,
                 Instant.now()
         );
-    }
-
-    public void accept() {
-        if (status != Status.SUBMITTED) {
-            throw new IllegalStateException("Only submitted orders can be accepted");
-        }
-        status = Status.OPEN;
-    }
-
-    public void reject() {
-        if (status != Status.SUBMITTED) {
-            throw new IllegalStateException("Only submitted orders can be rejected");
-        }
-        status = Status.REJECTED;
     }
 
     public void fill(BigDecimal quantityToFill) {
@@ -129,8 +115,6 @@ public class Order {
     }
 
     public enum Status {
-        SUBMITTED,
-        REJECTED,
         OPEN,
         PARTIALLY_FILLED,
         FILLED
