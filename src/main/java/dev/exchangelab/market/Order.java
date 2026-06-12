@@ -22,9 +22,6 @@ public class Order {
     private final BigDecimal quantity;
     private final Instant submittedAt;
 
-    private BigDecimal filledQuantity;
-    private Status status;
-
     // ---------------------------------------------------------------------
     // Internal Constructor
     // ---------------------------------------------------------------------
@@ -52,8 +49,6 @@ public class Order {
         this.limitPrice = limitPrice;
         this.quantity = quantity;
         this.submittedAt = Objects.requireNonNull(submittedAt);
-        this.filledQuantity = BigDecimal.ZERO;
-        this.status = Status.OPEN;
     }
 
     // ---------------------------------------------------------------------
@@ -78,33 +73,6 @@ public class Order {
         );
     }
 
-    public void fill(BigDecimal quantityToFill) {
-        if (!isOpen()) {
-            throw new IllegalStateException("Only open orders can be filled");
-        }
-        if (quantityToFill == null || quantityToFill.signum() <= 0) {
-            throw new IllegalArgumentException("Fill quantity must be greater than zero");
-        }
-        if (quantityToFill.compareTo(getRemainingQuantity()) > 0) {
-            throw new IllegalArgumentException("Fill quantity cannot exceed remaining quantity");
-        }
-
-        filledQuantity = filledQuantity.add(quantityToFill);
-        status = getRemainingQuantity().signum() == 0 ? Status.FILLED : Status.PARTIALLY_FILLED;
-    }
-
-    // ---------------------------------------------------------------------
-    // Derived State
-    // ---------------------------------------------------------------------
-
-    public BigDecimal getRemainingQuantity() {
-        return quantity.subtract(filledQuantity);
-    }
-
-    public boolean isOpen() {
-        return status == Status.OPEN || status == Status.PARTIALLY_FILLED;
-    }
-
     // ---------------------------------------------------------------------
     // Types
     // ---------------------------------------------------------------------
@@ -112,11 +80,5 @@ public class Order {
     public enum Side {
         BUY,
         SELL
-    }
-
-    public enum Status {
-        OPEN,
-        PARTIALLY_FILLED,
-        FILLED
     }
 }
