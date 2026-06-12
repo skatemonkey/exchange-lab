@@ -1,7 +1,6 @@
 package dev.exchangelab.market;
 
 import lombok.Getter;
-import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -9,7 +8,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Getter
-@Accessors(fluent = true)
 public class Order {
 
     // ---------------------------------------------------------------------
@@ -21,30 +19,30 @@ public class Order {
     private final String stockSymbol;
     private final Side side;
     private final BigDecimal limitPrice;
-    private final long quantity;
+    private final BigDecimal quantity;
     private final Instant submittedAt;
 
-    private long filledQuantity;
+    private BigDecimal filledQuantity;
     private Status status;
 
     // ---------------------------------------------------------------------
-    // Construction
+    // Internal Constructor
     // ---------------------------------------------------------------------
 
-    public Order(
+    private Order(
             UUID orderId,
             UUID traderId,
             String stockSymbol,
             Side side,
             BigDecimal limitPrice,
-            long quantity,
+            BigDecimal quantity,
             Instant submittedAt
     ) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Order quantity must be greater than zero");
-        }
         if (limitPrice == null || limitPrice.signum() <= 0) {
             throw new IllegalArgumentException("Limit price must be greater than zero");
+        }
+        if (quantity == null || quantity.signum() <= 0) {
+            throw new IllegalArgumentException("Order quantity must be greater than zero");
         }
 
         this.orderId = Objects.requireNonNull(orderId);
@@ -54,25 +52,31 @@ public class Order {
         this.limitPrice = limitPrice;
         this.quantity = quantity;
         this.submittedAt = Objects.requireNonNull(submittedAt);
-        this.filledQuantity = 0;
+        this.filledQuantity = BigDecimal.ZERO;
         this.status = Status.SUBMITTED;
     }
 
     // ---------------------------------------------------------------------
-    // Derived State
+    // Operations
     // ---------------------------------------------------------------------
 
-    public long remainingQuantity() {
-        return quantity - filledQuantity;
+    public static Order place(
+            UUID traderId,
+            String stockSymbol,
+            Side side,
+            BigDecimal limitPrice,
+            BigDecimal quantity
+    ) {
+        return new Order(
+                UUID.randomUUID(),
+                traderId,
+                stockSymbol,
+                side,
+                limitPrice,
+                quantity,
+                Instant.now()
+        );
     }
-
-    public boolean isOpen() {
-        return status == Status.OPEN || status == Status.PARTIALLY_FILLED;
-    }
-
-    // ---------------------------------------------------------------------
-    // State Changes
-    // ---------------------------------------------------------------------
 
     public void accept() {
         if (status != Status.SUBMITTED) {
@@ -88,19 +92,31 @@ public class Order {
         status = Status.REJECTED;
     }
 
-    public void fill(long quantityToFill) {
+    public void fill(BigDecimal quantityToFill) {
         if (!isOpen()) {
             throw new IllegalStateException("Only open orders can be filled");
         }
-        if (quantityToFill <= 0) {
+        if (quantityToFill == null || quantityToFill.signum() <= 0) {
             throw new IllegalArgumentException("Fill quantity must be greater than zero");
         }
-        if (quantityToFill > remainingQuantity()) {
+        if (quantityToFill.compareTo(getRemainingQuantity()) > 0) {
             throw new IllegalArgumentException("Fill quantity cannot exceed remaining quantity");
         }
 
-        filledQuantity += quantityToFill;
-        status = remainingQuantity() == 0 ? Status.FILLED : Status.PARTIALLY_FILLED;
+        filledQuantity = filledQuantity.add(quantityToFill);
+        status = getRemainingQuantity().signum() == 0 ? Status.FILLED : Status.PARTIALLY_FILLED;
+    }
+
+    // ---------------------------------------------------------------------
+    // Derived State
+    // ---------------------------------------------------------------------
+
+    public BigDecimal getRemainingQuantity() {
+        return quantity.subtract(filledQuantity);
+    }
+
+    public boolean isOpen() {
+        return status == Status.OPEN || status == Status.PARTIALLY_FILLED;
     }
 
     // ---------------------------------------------------------------------
