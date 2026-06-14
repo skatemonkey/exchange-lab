@@ -2,9 +2,13 @@ package dev.exchangelab.market;
 
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.TreeMap;
 
 @Getter
 public class OrderBook {
@@ -14,8 +18,8 @@ public class OrderBook {
     // ---------------------------------------------------------------------
 
     private final String stockSymbol;
-    private final List<Order> buyOrders;
-    private final List<Order> sellOrders;
+    private final NavigableMap<BigDecimal, Queue<Order>> buyOrders;
+    private final NavigableMap<BigDecimal, Queue<Order>> sellOrders;
 
     // ---------------------------------------------------------------------
     // Constructor
@@ -23,8 +27,8 @@ public class OrderBook {
 
     public OrderBook(String stockSymbol) {
         this.stockSymbol = requireText(stockSymbol, "Stock symbol is required");
-        this.buyOrders = new ArrayList<>();
-        this.sellOrders = new ArrayList<>();
+        this.buyOrders = new TreeMap<>(Comparator.reverseOrder());
+        this.sellOrders = new TreeMap<>();
     }
 
     // ---------------------------------------------------------------------
@@ -39,11 +43,19 @@ public class OrderBook {
         }
 
         if (order.getSide() == Order.Side.BUY) {
-            buyOrders.add(order);
+            addToPriceLevel(buyOrders, order);
             return;
         }
 
-        sellOrders.add(order);
+        addToPriceLevel(sellOrders, order);
+    }
+
+    // ---------------------------------------------------------------------
+    // Internal Helpers
+    // ---------------------------------------------------------------------
+
+    private static void addToPriceLevel(NavigableMap<BigDecimal, Queue<Order>> orders, Order order) {
+        orders.computeIfAbsent(order.getLimitPrice(), ignored -> new ArrayDeque<>()).add(order);
     }
 
     // ---------------------------------------------------------------------
