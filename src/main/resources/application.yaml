@@ -1,3 +1,11 @@
 spring:
   application:
     name: exchange-lab
+  datasource:
+    url: jdbc:postgresql://localhost:5432/exchange_lab
+    username: exchange_lab
+    password: exchange_lab
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
