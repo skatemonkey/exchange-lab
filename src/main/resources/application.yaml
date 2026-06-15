@@ -7,5 +7,5 @@ spring:
     password: exchange_lab
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
