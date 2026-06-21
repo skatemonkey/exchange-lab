@@ -1,6 +1,6 @@
 package dev.exchangelab.market.application.dto;
 
-import dev.exchangelab.market.Order;
+import dev.exchangelab.market.domain.Order;
 
 import java.math.BigDecimal;
 import java.time.Instant;

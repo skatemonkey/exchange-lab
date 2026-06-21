@@ -1,4 +1,4 @@
-package dev.exchangelab.market;
+package dev.exchangelab.market.domain;
 
 import lombok.Getter;
 
@@ -7,49 +7,49 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Getter
-public class TraderAccount {
+public class Position {
 
     // ---------------------------------------------------------------------
     // Fields
     // ---------------------------------------------------------------------
 
     private final UUID traderId;
-    private final String username;
-    private final BigDecimal cashBalance;
-    private final BigDecimal reservedCash;
+    private final String stockSymbol;
+    private final BigDecimal quantity;
+    private final BigDecimal reservedQuantity;
 
     // ---------------------------------------------------------------------
     // Constructor
     // ---------------------------------------------------------------------
 
-    public TraderAccount(
+    public Position(
             UUID traderId,
-            String username,
-            BigDecimal cashBalance,
-            BigDecimal reservedCash
+            String stockSymbol,
+            BigDecimal quantity,
+            BigDecimal reservedQuantity
     ) {
-        if (cashBalance == null || cashBalance.signum() < 0) {
-            throw new IllegalArgumentException("Cash balance cannot be negative");
+        if (quantity == null || quantity.signum() < 0) {
+            throw new IllegalArgumentException("Position quantity cannot be negative");
         }
-        if (reservedCash == null || reservedCash.signum() < 0) {
-            throw new IllegalArgumentException("Reserved cash cannot be negative");
+        if (reservedQuantity == null || reservedQuantity.signum() < 0) {
+            throw new IllegalArgumentException("Reserved quantity cannot be negative");
         }
-        if (reservedCash.compareTo(cashBalance) > 0) {
-            throw new IllegalArgumentException("Reserved cash cannot exceed cash balance");
+        if (reservedQuantity.compareTo(quantity) > 0) {
+            throw new IllegalArgumentException("Reserved quantity cannot exceed position quantity");
         }
 
         this.traderId = Objects.requireNonNull(traderId);
-        this.username = requireText(username, "Username is required");
-        this.cashBalance = cashBalance;
-        this.reservedCash = reservedCash;
+        this.stockSymbol = requireText(stockSymbol, "Stock symbol is required");
+        this.quantity = quantity;
+        this.reservedQuantity = reservedQuantity;
     }
 
     // ---------------------------------------------------------------------
     // Derived State
     // ---------------------------------------------------------------------
 
-    public BigDecimal getAvailableCash() {
-        return cashBalance.subtract(reservedCash);
+    public BigDecimal getAvailableQuantity() {
+        return quantity.subtract(reservedQuantity);
     }
 
     // ---------------------------------------------------------------------

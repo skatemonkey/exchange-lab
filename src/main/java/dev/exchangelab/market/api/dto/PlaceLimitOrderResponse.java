@@ -1,6 +1,6 @@
 package dev.exchangelab.market.api.dto;
 
-import dev.exchangelab.market.Order;
+import dev.exchangelab.market.domain.Order;
 import dev.exchangelab.market.application.dto.PlaceLimitOrderResult;
 
 import java.math.BigDecimal;

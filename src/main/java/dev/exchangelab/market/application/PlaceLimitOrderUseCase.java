@@ -1,6 +1,6 @@
 package dev.exchangelab.market.application;
 
-import dev.exchangelab.market.Order;
+import dev.exchangelab.market.domain.Order;
 import dev.exchangelab.market.application.dto.PlaceLimitOrderCommand;
 import dev.exchangelab.market.application.dto.PlaceLimitOrderResult;
 import org.springframework.stereotype.Service;

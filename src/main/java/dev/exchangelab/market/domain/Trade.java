@@ -1,4 +1,4 @@
-package dev.exchangelab.market;
+package dev.exchangelab.market.domain;
 
 import lombok.Getter;
 

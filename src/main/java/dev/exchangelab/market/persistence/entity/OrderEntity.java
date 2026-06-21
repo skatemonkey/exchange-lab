@@ -1,6 +1,6 @@
 package dev.exchangelab.market.persistence.entity;
 
-import dev.exchangelab.market.Order;
+import dev.exchangelab.market.domain.Order;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

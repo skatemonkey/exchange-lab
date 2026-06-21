@@ -1,6 +1,6 @@
 package dev.exchangelab.market.persistence.repository;
 
-import dev.exchangelab.market.Order;
+import dev.exchangelab.market.domain.Order;
 import dev.exchangelab.market.persistence.entity.OrderEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
