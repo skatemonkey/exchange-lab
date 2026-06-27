@@ -2,8 +2,10 @@ package dev.exchangelab.service.impl;
 
 import dev.exchangelab.model.dto.PlaceLimitOrderRequest;
 import dev.exchangelab.model.dto.PlaceLimitOrderResponse;
+import dev.exchangelab.model.entity.OrderEntity;
 import dev.exchangelab.model.entity.StockPositionEntity;
 import dev.exchangelab.model.entity.TraderAccountEntity;
+import dev.exchangelab.repository.dao.OrderDao;
 import dev.exchangelab.repository.dao.StockPositionDao;
 import dev.exchangelab.repository.dao.TraderAccountDao;
 import dev.exchangelab.service.OrderService;
@@ -11,12 +13,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
+    private final OrderDao orderDao;
     private final TraderAccountDao traderAccountDao;
     private final StockPositionDao stockPositionDao;
 
@@ -27,7 +31,7 @@ public class OrderServiceImpl implements OrderService {
          * 1. Validate the limit order request. [done]
          * 2. Validate whether the trader has enough cash or stock. [done]
          * 3. Reserve cash for buy orders or stock quantity for sell orders. [done]
-         * 4. Compare the order against the current order book. [todo]
+         * 4. Compare the order against the current order book by price-time priority. [done]
          * 5. If matching orders exist, execute one or more trades. [todo]
          * 6. Settle each trade by moving cash and stock between traders. [todo]
          * 7. Store the order, trades, account updates, and position updates. [todo]
@@ -43,7 +47,8 @@ public class OrderServiceImpl implements OrderService {
         // 3. Reserve cash for buy orders or stock quantity for sell orders. [done]
         reserveCashOrStock(request);
 
-        // 4. Compare the order against the current order book. [todo]
+        // 4. Compare the order against the current order book by price-time priority. [done]
+        List<OrderEntity> matchingOrders = findMatchingOrders(request);
 
         // 5. If matching orders exist, execute one or more trades. [todo]
 
@@ -138,5 +143,18 @@ public class OrderServiceImpl implements OrderService {
                 stockPositionDao.save(position);
             }
         }
+    }
+
+    private List<OrderEntity> findMatchingOrders(PlaceLimitOrderRequest request) {
+        return switch (request.side()) {
+            case BUY -> orderDao.findMatchableSellOrders(
+                    request.symbol(),
+                    request.limitPrice()
+            );
+            case SELL -> orderDao.findMatchableBuyOrders(
+                    request.symbol(),
+                    request.limitPrice()
+            );
+        };
     }
 }

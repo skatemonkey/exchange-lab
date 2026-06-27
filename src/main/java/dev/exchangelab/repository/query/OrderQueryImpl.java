@@ -1,10 +1,12 @@
 package dev.exchangelab.repository.query;
 
 import dev.exchangelab.model.entity.OrderEntity;
+import dev.exchangelab.model.enums.OrderSide;
 import dev.exchangelab.model.enums.OrderStatus;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -17,16 +19,40 @@ public class OrderQueryImpl implements OrderQuery {
     }
 
     @Override
-    public List<OrderEntity> findAcceptedOrdersBySymbol(String symbol) {
+    public List<OrderEntity> findMatchableBuyOrders(String symbol, BigDecimal sellLimitPrice) {
+        // Existing buy orders: highest bid first, then oldest order first.
         return entityManager.createQuery("""
                         select o
                         from OrderEntity o
                         where o.symbol = :symbol
                           and o.status = :status
-                        order by o.createdAt asc
+                          and o.side = :side
+                          and o.limitPrice >= :sellLimitPrice
+                        order by o.limitPrice desc, o.createdAt asc
                         """, OrderEntity.class)
                 .setParameter("symbol", symbol)
                 .setParameter("status", OrderStatus.ACCEPTED)
+                .setParameter("side", OrderSide.BUY)
+                .setParameter("sellLimitPrice", sellLimitPrice)
+                .getResultList();
+    }
+
+    @Override
+    public List<OrderEntity> findMatchableSellOrders(String symbol, BigDecimal buyLimitPrice) {
+        // Existing sell orders: lowest ask first, then oldest order first.
+        return entityManager.createQuery("""
+                        select o
+                        from OrderEntity o
+                        where o.symbol = :symbol
+                          and o.status = :status
+                          and o.side = :side
+                          and o.limitPrice <= :buyLimitPrice
+                        order by o.limitPrice asc, o.createdAt asc
+                        """, OrderEntity.class)
+                .setParameter("symbol", symbol)
+                .setParameter("status", OrderStatus.ACCEPTED)
+                .setParameter("side", OrderSide.SELL)
+                .setParameter("buyLimitPrice", buyLimitPrice)
                 .getResultList();
     }
 }
