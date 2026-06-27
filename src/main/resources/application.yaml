@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: exchange-lab
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,mappings
