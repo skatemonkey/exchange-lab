@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: exchange-lab-postgres
+    environment:
+      POSTGRES_DB: exchange_lab
+      POSTGRES_USER: exchange_lab
+      POSTGRES_PASSWORD: exchange_lab
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exchange_lab -d exchange_lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
