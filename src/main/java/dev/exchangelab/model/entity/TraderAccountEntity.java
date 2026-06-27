@@ -4,12 +4,20 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Getter
 @Entity
 @Table(name = "trader_accounts")
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TraderAccountEntity {
 
     @Id
@@ -19,35 +27,7 @@ public class TraderAccountEntity {
     @Column(name = "cash_balance", nullable = false, precision = 19, scale = 8)
     private BigDecimal cashBalance;
 
+    @Setter
     @Column(name = "reserved_cash", nullable = false, precision = 19, scale = 8)
     private BigDecimal reservedCash;
-
-    protected TraderAccountEntity() {
-    }
-
-    public TraderAccountEntity(
-            UUID traderId,
-            BigDecimal cashBalance,
-            BigDecimal reservedCash
-    ) {
-        this.traderId = traderId;
-        this.cashBalance = cashBalance;
-        this.reservedCash = reservedCash;
-    }
-
-    public UUID getTraderId() {
-        return traderId;
-    }
-
-    public BigDecimal getCashBalance() {
-        return cashBalance;
-    }
-
-    public BigDecimal getReservedCash() {
-        return reservedCash;
-    }
-
-    public BigDecimal getAvailableCash() {
-        return cashBalance.subtract(reservedCash);
-    }
 }

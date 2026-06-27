@@ -25,8 +25,8 @@ public class OrderServiceImpl implements OrderService {
         /*
          * Planned order flow:
          * 1. Validate the limit order request. [done]
-         * 2. Check whether the trader has enough cash or stock. [done]
-         * 3. Reserve cash for buy orders or stock quantity for sell orders. [todo]
+         * 2. Validate whether the trader has enough cash or stock. [done]
+         * 3. Reserve cash for buy orders or stock quantity for sell orders. [done]
          * 4. Compare the order against the current order book. [todo]
          * 5. If matching orders exist, execute one or more trades. [todo]
          * 6. Settle each trade by moving cash and stock between traders. [todo]
@@ -37,10 +37,11 @@ public class OrderServiceImpl implements OrderService {
         // 1. Validate the limit order request. [done]
         validateLimitOrderRequest(request);
 
-        // 2. Check whether the trader has enough cash or stock. [done]
-        checkWhetherTraderHasEnoughCashOrStock(request);
+        // 2. Validate whether the trader has enough cash or stock. [done]
+        validateTraderHasEnoughCashOrStock(request);
 
-        // 3. Reserve cash for buy orders or stock quantity for sell orders. [todo]
+        // 3. Reserve cash for buy orders or stock quantity for sell orders. [done]
+        reserveCashOrStock(request);
 
         // 4. Compare the order against the current order book. [todo]
 
@@ -78,14 +79,15 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private void checkWhetherTraderHasEnoughCashOrStock(PlaceLimitOrderRequest request) {
+    private void validateTraderHasEnoughCashOrStock(PlaceLimitOrderRequest request) {
         switch (request.side()) {
             case BUY -> {
                 BigDecimal requiredCash = request.limitPrice().multiply(request.quantity());
                 TraderAccountEntity account = traderAccountDao.findAccountForCashCheck(request.traderId())
                         .orElseThrow(() -> new IllegalStateException("Trader account not found"));
 
-                if (account.getAvailableCash().compareTo(requiredCash) < 0) {
+                BigDecimal availableCash = account.getCashBalance().subtract(account.getReservedCash());
+                if (availableCash.compareTo(requiredCash) < 0) {
                     throw new IllegalStateException("Trader does not have enough available cash");
                 }
             }
@@ -97,9 +99,43 @@ public class OrderServiceImpl implements OrderService {
                         )
                         .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
 
-                if (position.getAvailableQuantity().compareTo(requiredQuantity) < 0) {
+                BigDecimal availableQuantity = position.getQuantity().subtract(position.getReservedQuantity());
+                if (availableQuantity.compareTo(requiredQuantity) < 0) {
                     throw new IllegalStateException("Trader does not have enough available stock");
                 }
+            }
+        }
+    }
+
+    private void reserveCashOrStock(PlaceLimitOrderRequest request) {
+        switch (request.side()) {
+            case BUY -> {
+                BigDecimal reservedCash = request.limitPrice().multiply(request.quantity());
+                TraderAccountEntity account = traderAccountDao.findAccountForCashCheck(request.traderId())
+                        .orElseThrow(() -> new IllegalStateException("Trader account not found"));
+
+                BigDecimal availableCash = account.getCashBalance().subtract(account.getReservedCash());
+                if (availableCash.compareTo(reservedCash) < 0) {
+                    throw new IllegalStateException("Cannot reserve more cash than available");
+                }
+
+                account.setReservedCash(account.getReservedCash().add(reservedCash));
+                traderAccountDao.save(account);
+            }
+            case SELL -> {
+                StockPositionEntity position = stockPositionDao.findPositionForStockCheck(
+                                request.traderId(),
+                                request.symbol()
+                        )
+                        .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
+
+                BigDecimal availableQuantity = position.getQuantity().subtract(position.getReservedQuantity());
+                if (availableQuantity.compareTo(request.quantity()) < 0) {
+                    throw new IllegalStateException("Cannot reserve more stock than available");
+                }
+
+                position.setReservedQuantity(position.getReservedQuantity().add(request.quantity()));
+                stockPositionDao.save(position);
             }
         }
     }

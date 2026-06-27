@@ -8,13 +8,20 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+@Getter
 @Entity
 @Table(name = "orders")
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderEntity {
 
     @Id
@@ -46,65 +53,4 @@ public class OrderEntity {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
-
-    protected OrderEntity() {
-    }
-
-    public OrderEntity(
-            UUID orderId,
-            UUID traderId,
-            String symbol,
-            OrderSide side,
-            BigDecimal limitPrice,
-            BigDecimal quantity,
-            BigDecimal remainingQuantity,
-            OrderStatus status,
-            Instant createdAt
-    ) {
-        this.orderId = orderId;
-        this.traderId = traderId;
-        this.symbol = symbol;
-        this.side = side;
-        this.limitPrice = limitPrice;
-        this.quantity = quantity;
-        this.remainingQuantity = remainingQuantity;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
-
-    public UUID getOrderId() {
-        return orderId;
-    }
-
-    public UUID getTraderId() {
-        return traderId;
-    }
-
-    public String getSymbol() {
-        return symbol;
-    }
-
-    public OrderSide getSide() {
-        return side;
-    }
-
-    public BigDecimal getLimitPrice() {
-        return limitPrice;
-    }
-
-    public BigDecimal getQuantity() {
-        return quantity;
-    }
-
-    public BigDecimal getRemainingQuantity() {
-        return remainingQuantity;
-    }
-
-    public OrderStatus getStatus() {
-        return status;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
 }
