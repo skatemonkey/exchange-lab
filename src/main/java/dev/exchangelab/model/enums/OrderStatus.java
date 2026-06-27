@@ -1,5 +1,7 @@
 package dev.exchangelab.model.enums;
 
 public enum OrderStatus {
-    ACCEPTED
+    ACCEPTED,
+    PARTIALLY_FILLED,
+    FILLED
 }

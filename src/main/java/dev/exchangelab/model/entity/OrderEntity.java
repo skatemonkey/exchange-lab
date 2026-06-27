@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -44,9 +45,11 @@ public class OrderEntity {
     @Column(name = "quantity", nullable = false, precision = 19, scale = 8)
     private BigDecimal quantity;
 
+    @Setter
     @Column(name = "remaining_quantity", nullable = false, precision = 19, scale = 8)
     private BigDecimal remainingQuantity;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private OrderStatus status;
