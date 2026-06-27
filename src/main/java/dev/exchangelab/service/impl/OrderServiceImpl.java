@@ -2,21 +2,30 @@ package dev.exchangelab.service.impl;
 
 import dev.exchangelab.model.dto.PlaceLimitOrderRequest;
 import dev.exchangelab.model.dto.PlaceLimitOrderResponse;
+import dev.exchangelab.model.entity.StockPositionEntity;
+import dev.exchangelab.model.entity.TraderAccountEntity;
+import dev.exchangelab.repository.dao.StockPositionDao;
+import dev.exchangelab.repository.dao.TraderAccountDao;
 import dev.exchangelab.service.OrderService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
+
+    private final TraderAccountDao traderAccountDao;
+    private final StockPositionDao stockPositionDao;
 
     @Override
     public PlaceLimitOrderResponse placeLimitOrder(PlaceLimitOrderRequest request) {
         /*
          * Planned order flow:
          * 1. Validate the limit order request. [done]
-         * 2. Check whether the trader has enough cash or stock. [todo]
+         * 2. Check whether the trader has enough cash or stock. [done]
          * 3. Reserve cash for buy orders or stock quantity for sell orders. [todo]
          * 4. Compare the order against the current order book. [todo]
          * 5. If matching orders exist, execute one or more trades. [todo]
@@ -28,7 +37,7 @@ public class OrderServiceImpl implements OrderService {
         // 1. Validate the limit order request. [done]
         validateLimitOrderRequest(request);
 
-        // 2. Check whether the trader has enough cash or stock. [todo]
+        // 2. Check whether the trader has enough cash or stock. [done]
         checkWhetherTraderHasEnoughCashOrStock(request);
 
         // 3. Reserve cash for buy orders or stock quantity for sell orders. [todo]
@@ -73,11 +82,24 @@ public class OrderServiceImpl implements OrderService {
         switch (request.side()) {
             case BUY -> {
                 BigDecimal requiredCash = request.limitPrice().multiply(request.quantity());
-                // Later: load trader account and check available cash >= requiredCash.
+                TraderAccountEntity account = traderAccountDao.findAccountForCashCheck(request.traderId())
+                        .orElseThrow(() -> new IllegalStateException("Trader account not found"));
+
+                if (account.getAvailableCash().compareTo(requiredCash) < 0) {
+                    throw new IllegalStateException("Trader does not have enough available cash");
+                }
             }
             case SELL -> {
                 BigDecimal requiredQuantity = request.quantity();
-                // Later: load trader position and check available quantity >= requiredQuantity.
+                StockPositionEntity position = stockPositionDao.findPositionForStockCheck(
+                                request.traderId(),
+                                request.symbol()
+                        )
+                        .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
+
+                if (position.getAvailableQuantity().compareTo(requiredQuantity) < 0) {
+                    throw new IllegalStateException("Trader does not have enough available stock");
+                }
             }
         }
     }
