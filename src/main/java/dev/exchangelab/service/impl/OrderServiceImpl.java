@@ -15,33 +15,33 @@ public class OrderServiceImpl implements OrderService {
     public PlaceLimitOrderResponse placeLimitOrder(PlaceLimitOrderRequest request) {
         /*
          * Planned order flow:
-         * 1. Validate the limit order request.
-         * 2. Check whether the trader has enough cash or stock.
-         * 3. Reserve cash for buy orders or stock quantity for sell orders.
-         * 4. Compare the order against the current order book.
-         * 5. If matching orders exist, execute one or more trades.
-         * 6. Settle each trade by moving cash and stock between traders.
-         * 7. Store the order, trades, account updates, and position updates.
-         * 8. Return the final order status to the client.
+         * 1. Validate the limit order request. [done]
+         * 2. Check whether the trader has enough cash or stock. [todo]
+         * 3. Reserve cash for buy orders or stock quantity for sell orders. [todo]
+         * 4. Compare the order against the current order book. [todo]
+         * 5. If matching orders exist, execute one or more trades. [todo]
+         * 6. Settle each trade by moving cash and stock between traders. [todo]
+         * 7. Store the order, trades, account updates, and position updates. [todo]
+         * 8. Return the final order status to the client. [partial]
          */
 
-        // 1. Validate the limit order request.
+        // 1. Validate the limit order request. [done]
         validateLimitOrderRequest(request);
 
-        // 2. Check whether the trader has enough cash or stock.
+        // 2. Check whether the trader has enough cash or stock. [todo]
         checkWhetherTraderHasEnoughCashOrStock(request);
 
-        // 3. Reserve cash for buy orders or stock quantity for sell orders.
+        // 3. Reserve cash for buy orders or stock quantity for sell orders. [todo]
 
-        // 4. Compare the order against the current order book.
+        // 4. Compare the order against the current order book. [todo]
 
-        // 5. If matching orders exist, execute one or more trades.
+        // 5. If matching orders exist, execute one or more trades. [todo]
 
-        // 6. Settle each trade by moving cash and stock between traders.
+        // 6. Settle each trade by moving cash and stock between traders. [todo]
 
-        // 7. Store the order, trades, account updates, and position updates.
+        // 7. Store the order, trades, account updates, and position updates. [todo]
 
-        // 8. Return the final order status to the client.
+        // 8. Return the final order status to the client. [partial]
         return PlaceLimitOrderResponse.accepted(
                 UUID.randomUUID(),
                 request
