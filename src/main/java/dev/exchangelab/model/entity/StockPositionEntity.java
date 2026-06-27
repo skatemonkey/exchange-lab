@@ -30,6 +30,7 @@ public class StockPositionEntity {
     @Column(name = "symbol", nullable = false, length = 20)
     private String symbol;
 
+    @Setter
     @Column(name = "quantity", nullable = false, precision = 19, scale = 8)
     private BigDecimal quantity;
 

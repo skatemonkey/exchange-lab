@@ -24,6 +24,7 @@ public class TraderAccountEntity {
     @Column(name = "trader_id", nullable = false)
     private UUID traderId;
 
+    @Setter
     @Column(name = "cash_balance", nullable = false, precision = 19, scale = 8)
     private BigDecimal cashBalance;
 

@@ -1,5 +1,6 @@
 package dev.exchangelab.model.dto;
 
+import dev.exchangelab.model.entity.OrderEntity;
 import dev.exchangelab.model.enums.OrderSide;
 import dev.exchangelab.model.enums.OrderStatus;
 
@@ -28,6 +29,18 @@ public record PlaceLimitOrderResponse(
                 request.limitPrice(),
                 request.quantity(),
                 OrderStatus.ACCEPTED
+        );
+    }
+
+    public static PlaceLimitOrderResponse from(OrderEntity order) {
+        return new PlaceLimitOrderResponse(
+                order.getOrderId(),
+                order.getTraderId(),
+                order.getSymbol(),
+                order.getSide(),
+                order.getLimitPrice(),
+                order.getQuantity(),
+                order.getStatus()
         );
     }
 }
