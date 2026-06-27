@@ -3,8 +3,8 @@
 > **Table of Contents**
 >
 > - [1. Overview](#1-overview)
-> - [2. Starting Point](#2-starting-point)
-> - [3. Long-Term Direction](#3-long-term-direction)
+> - [2. Long-Term Direction](#2-long-term-direction)
+> - [3. Development Roadmap](#3-development-roadmap)
 
 ## 1. Overview
 
@@ -23,29 +23,7 @@ and limit sell orders. A user should be able to submit a limit order, the system
 should decide whether it can be accepted, and later the platform should match
 compatible buy and sell orders into trades.
 
-## 2. Starting Point
-
-The first implementation should use the structure that is already familiar:
-
-- Controller
-- Service
-- Repository
-
-At the beginning, the service layer can hold most of the business logic. This is
-deliberate. The project should start from a simple three-layer Spring Boot
-baseline, then evolve only when the code starts to need stronger boundaries.
-
-Initial scope:
-
-- One order API.
-- Limit buy and limit sell only.
-- Simple request validation.
-- Simple service-layer business logic.
-- Simple persistence when the database is introduced.
-- No Kafka, Redis, gateway, service discovery, or advanced architecture on day
-  one.
-
-## 3. Long-Term Direction
+## 2. Long-Term Direction
 
 As the project grows, the architecture should mature step by step instead of
 jumping directly into complexity.
@@ -67,3 +45,13 @@ Future learning and implementation areas include:
 The important idea is progression: begin with controller-service-repository,
 understand the pain points, then introduce each advanced concept when it solves a
 real problem in the trading platform.
+
+## 3. Development Roadmap
+
+### Phase 1: Controller-Service-Repository Baseline
+
+> Build the first limit order API using the familiar Spring Boot
+> controller-service-repository structure.
+
+Phase 1 covers one vertical slice: accept limit buy and limit sell requests,
+validate the basic input, store the order, and return a clear response.
