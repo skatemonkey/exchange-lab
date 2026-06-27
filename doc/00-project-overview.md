@@ -55,3 +55,9 @@ real problem in the trading platform.
 
 Phase 1 covers one vertical slice: accept limit buy and limit sell requests,
 validate the basic input, store the order, and return a clear response.
+
+Status: completed at commit `505bb9a`.
+
+The simple baseline model is now in place: controller, service, repository,
+entities, Postgres Docker setup, and Flyway schema migration. The next phase is
+to rewrite and grow this code in a domain-driven design style.
