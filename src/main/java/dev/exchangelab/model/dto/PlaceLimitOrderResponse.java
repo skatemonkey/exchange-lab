@@ -1,4 +1,7 @@
-package dev.exchangelab.order.api.dto;
+package dev.exchangelab.model.dto;
+
+import dev.exchangelab.model.enums.OrderSide;
+import dev.exchangelab.model.enums.OrderStatus;
 
 import java.math.BigDecimal;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package dev.exchangelab.order.api.dto;
+package dev.exchangelab.model.enums;
 
 public enum OrderStatus {
     ACCEPTED

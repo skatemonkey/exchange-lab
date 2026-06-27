@@ -1,8 +1,8 @@
-package dev.exchangelab.order.api;
+package dev.exchangelab.controller;
 
-import dev.exchangelab.order.api.dto.PlaceLimitOrderRequest;
-import dev.exchangelab.order.api.dto.PlaceLimitOrderResponse;
-import dev.exchangelab.order.service.OrderService;
+import dev.exchangelab.model.dto.PlaceLimitOrderRequest;
+import dev.exchangelab.model.dto.PlaceLimitOrderResponse;
+import dev.exchangelab.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
