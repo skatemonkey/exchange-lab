@@ -1,18 +1,18 @@
 package dev.exchangelab;
 
-import dev.exchangelab.model.dto.PlaceLimitOrderRequest;
-import dev.exchangelab.model.dto.PlaceLimitOrderResponse;
-import dev.exchangelab.model.entity.OrderEntity;
-import dev.exchangelab.model.entity.StockPositionEntity;
-import dev.exchangelab.model.entity.TradeEntity;
-import dev.exchangelab.model.entity.TraderAccountEntity;
-import dev.exchangelab.model.enums.OrderSide;
-import dev.exchangelab.model.enums.OrderStatus;
-import dev.exchangelab.repository.dao.OrderDao;
-import dev.exchangelab.repository.dao.StockPositionDao;
-import dev.exchangelab.repository.dao.TradeDao;
-import dev.exchangelab.repository.dao.TraderAccountDao;
-import dev.exchangelab.service.OrderService;
+import dev.exchangelab.application.PlaceLimitOrderUseCase;
+import dev.exchangelab.domain.model.OrderSide;
+import dev.exchangelab.domain.model.OrderStatus;
+import dev.exchangelab.infrastructure.persistence.dao.OrderDao;
+import dev.exchangelab.infrastructure.persistence.dao.StockPositionDao;
+import dev.exchangelab.infrastructure.persistence.dao.TradeDao;
+import dev.exchangelab.infrastructure.persistence.dao.TraderAccountDao;
+import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
+import dev.exchangelab.infrastructure.persistence.entity.StockPositionEntity;
+import dev.exchangelab.infrastructure.persistence.entity.TradeEntity;
+import dev.exchangelab.infrastructure.persistence.entity.TraderAccountEntity;
+import dev.exchangelab.presentation.PlaceLimitOrderRequest;
+import dev.exchangelab.presentation.PlaceLimitOrderResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +40,7 @@ class OrderPlacementIntegrationTest {
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:18");
 
     @Autowired
-    private OrderService orderService;
+    private PlaceLimitOrderUseCase placeLimitOrderUseCase;
 
     @Autowired
     private OrderDao orderDao;
@@ -66,7 +66,7 @@ class OrderPlacementIntegrationTest {
     void acceptsUnmatchedBuyOrderAndReservesCash() {
         UUID buyerId = traderWithCash("10000");
 
-        PlaceLimitOrderResponse response = orderService.placeLimitOrder(
+        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
@@ -93,7 +93,7 @@ class OrderPlacementIntegrationTest {
         UUID sellerId = traderWithCash("0");
         UUID sellOrderId = restingSellOrder(sellerId, "100", "10", Instant.parse("2026-01-01T00:00:00Z"));
 
-        PlaceLimitOrderResponse response = orderService.placeLimitOrder(
+        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
@@ -143,7 +143,7 @@ class OrderPlacementIntegrationTest {
                 Instant.parse("2026-01-01T00:01:00Z")
         );
 
-        orderService.placeLimitOrder(
+        placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
@@ -181,7 +181,7 @@ class OrderPlacementIntegrationTest {
                 Instant.parse("2026-01-01T00:01:00Z")
         );
 
-        orderService.placeLimitOrder(
+        placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
@@ -206,7 +206,7 @@ class OrderPlacementIntegrationTest {
         UUID sellerId = traderWithCash("0");
         UUID sellOrderId = restingSellOrder(sellerId, "100", "5", Instant.parse("2026-01-01T00:00:00Z"));
 
-        PlaceLimitOrderResponse response = orderService.placeLimitOrder(
+        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
@@ -233,7 +233,7 @@ class OrderPlacementIntegrationTest {
     void matchesPartiallyFilledRestingOrderLater() {
         UUID sellerId = traderWithCash("0");
         seedPosition(sellerId, "10", "0");
-        PlaceLimitOrderResponse sellResponse = orderService.placeLimitOrder(
+        PlaceLimitOrderResponse sellResponse = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         sellerId,
                         SYMBOL,
@@ -245,7 +245,7 @@ class OrderPlacementIntegrationTest {
         UUID firstBuyerId = traderWithCash("10000");
         UUID secondBuyerId = traderWithCash("10000");
 
-        orderService.placeLimitOrder(
+        placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         firstBuyerId,
                         SYMBOL,
@@ -254,7 +254,7 @@ class OrderPlacementIntegrationTest {
                         quantity("4")
                 )
         );
-        PlaceLimitOrderResponse secondBuyResponse = orderService.placeLimitOrder(
+        PlaceLimitOrderResponse secondBuyResponse = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         secondBuyerId,
                         SYMBOL,
