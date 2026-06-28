@@ -1,4 +1,4 @@
-package dev.exchangelab.presentation;
+package dev.exchangelab.presentation.dto;
 
 import dev.exchangelab.domain.model.Order;
 

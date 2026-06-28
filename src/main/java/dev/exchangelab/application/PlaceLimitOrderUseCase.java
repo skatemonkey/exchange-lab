@@ -1,7 +1,7 @@
 package dev.exchangelab.application;
 
-import dev.exchangelab.presentation.PlaceLimitOrderRequest;
-import dev.exchangelab.presentation.PlaceLimitOrderResponse;
+import dev.exchangelab.presentation.dto.PlaceLimitOrderRequest;
+import dev.exchangelab.presentation.dto.PlaceLimitOrderResponse;
 
 public interface PlaceLimitOrderUseCase {
 
