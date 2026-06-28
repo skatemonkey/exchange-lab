@@ -1,6 +1,7 @@
 package dev.exchangelab.infrastructure.persistence.repository;
 
 import dev.exchangelab.domain.model.Order;
+import dev.exchangelab.domain.model.OrderBook;
 import dev.exchangelab.domain.repository.OrderRepository;
 import dev.exchangelab.infrastructure.persistence.dao.OrderDao;
 import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
@@ -17,15 +18,29 @@ public class JpaOrderRepository implements OrderRepository {
     private final OrderDao orderDao;
 
     @Override
-    public List<Order> findMatchableBuyOrders(String symbol, BigDecimal sellLimitPrice) {
+    public OrderBook findOrderBookFor(Order incomingOrder) {
+        List<Order> restingOrders = switch (incomingOrder.getSide()) {
+            case BUY -> findMatchableSellOrders(
+                    incomingOrder.getSymbol(),
+                    incomingOrder.getLimitPrice()
+            );
+            case SELL -> findMatchableBuyOrders(
+                    incomingOrder.getSymbol(),
+                    incomingOrder.getLimitPrice()
+            );
+        };
+
+        return new OrderBook(restingOrders);
+    }
+
+    private List<Order> findMatchableBuyOrders(String symbol, BigDecimal sellLimitPrice) {
         return orderDao.findMatchableBuyOrders(symbol, sellLimitPrice)
                 .stream()
                 .map(this::toDomain)
                 .toList();
     }
 
-    @Override
-    public List<Order> findMatchableSellOrders(String symbol, BigDecimal buyLimitPrice) {
+    private List<Order> findMatchableSellOrders(String symbol, BigDecimal buyLimitPrice) {
         return orderDao.findMatchableSellOrders(symbol, buyLimitPrice)
                 .stream()
                 .map(this::toDomain)

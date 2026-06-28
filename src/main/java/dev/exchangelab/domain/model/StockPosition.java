@@ -16,6 +16,13 @@ public class StockPosition {
     private BigDecimal quantity;
     private BigDecimal reservedQuantity;
 
+    public record Key(UUID traderId, String symbol) {
+    }
+
+    public Key key() {
+        return new Key(traderId, symbol);
+    }
+
     public BigDecimal availableQuantity() {
         return quantity.subtract(reservedQuantity);
     }
