@@ -1,6 +1,6 @@
 package dev.exchangelab.domain.service;
 
-import dev.exchangelab.domain.model.OrderSide;
+import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.domain.model.StockPosition;
 import dev.exchangelab.domain.model.TraderAccount;
 import dev.exchangelab.domain.repository.StockPositionRepository;
@@ -18,16 +18,10 @@ public class OrderReservationService {
     private final TraderAccountRepository traderAccountRepository;
     private final StockPositionRepository stockPositionRepository;
 
-    public void reserve(
-            UUID traderId,
-            String symbol,
-            OrderSide side,
-            BigDecimal limitPrice,
-            BigDecimal quantity
-    ) {
-        switch (side) {
-            case BUY -> reserveCash(traderId, limitPrice, quantity);
-            case SELL -> reserveStock(traderId, symbol, quantity);
+    public void reserve(Order order) {
+        switch (order.getSide()) {
+            case BUY -> reserveCash(order.getTraderId(), order.getLimitPrice(), order.getQuantity());
+            case SELL -> reserveStock(order.getTraderId(), order.getSymbol(), order.getQuantity());
         }
     }
 

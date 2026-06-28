@@ -1,8 +1,7 @@
 package dev.exchangelab;
 
 import dev.exchangelab.application.PlaceLimitOrderUseCase;
-import dev.exchangelab.domain.model.OrderSide;
-import dev.exchangelab.domain.model.OrderStatus;
+import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.infrastructure.persistence.dao.OrderDao;
 import dev.exchangelab.infrastructure.persistence.dao.StockPositionDao;
 import dev.exchangelab.infrastructure.persistence.dao.TradeDao;
@@ -70,7 +69,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
-                        OrderSide.BUY,
+                        Order.Side.BUY,
                         money("100"),
                         quantity("10")
                 )
@@ -79,8 +78,8 @@ class OrderPlacementIntegrationTest {
         OrderEntity order = orderDao.findById(response.orderId()).orElseThrow();
         TraderAccountEntity buyerAccount = traderAccountDao.findById(buyerId).orElseThrow();
 
-        assertThat(response.status()).isEqualTo(OrderStatus.ACCEPTED);
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.ACCEPTED);
+        assertThat(response.status()).isEqualTo(Order.Status.ACCEPTED);
+        assertThat(order.getStatus()).isEqualTo(Order.Status.ACCEPTED);
         assertThat(order.getRemainingQuantity()).isEqualByComparingTo("10");
         assertThat(buyerAccount.getCashBalance()).isEqualByComparingTo("10000");
         assertThat(buyerAccount.getReservedCash()).isEqualByComparingTo("1000");
@@ -97,7 +96,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
-                        OrderSide.BUY,
+                        Order.Side.BUY,
                         money("100"),
                         quantity("10")
                 )
@@ -111,8 +110,8 @@ class OrderPlacementIntegrationTest {
         StockPositionEntity buyerPosition = stockPositionDao.findByTraderIdAndSymbol(buyerId, SYMBOL).orElseThrow();
         StockPositionEntity sellerPosition = stockPositionDao.findByTraderIdAndSymbol(sellerId, SYMBOL).orElseThrow();
 
-        assertThat(buyOrder.getStatus()).isEqualTo(OrderStatus.FILLED);
-        assertThat(sellOrder.getStatus()).isEqualTo(OrderStatus.FILLED);
+        assertThat(buyOrder.getStatus()).isEqualTo(Order.Status.FILLED);
+        assertThat(sellOrder.getStatus()).isEqualTo(Order.Status.FILLED);
         assertThat(trade.getBuyOrderId()).isEqualTo(buyOrder.getOrderId());
         assertThat(trade.getSellOrderId()).isEqualTo(sellOrderId);
         assertThat(trade.getPrice()).isEqualByComparingTo("100");
@@ -147,7 +146,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
-                        OrderSide.BUY,
+                        Order.Side.BUY,
                         money("110"),
                         quantity("10")
                 )
@@ -159,8 +158,8 @@ class OrderPlacementIntegrationTest {
 
         assertThat(trade.getSellOrderId()).isEqualTo(cheapSellOrderId);
         assertThat(trade.getPrice()).isEqualByComparingTo("100");
-        assertThat(cheapSellOrder.getStatus()).isEqualTo(OrderStatus.FILLED);
-        assertThat(expensiveSellOrder.getStatus()).isEqualTo(OrderStatus.ACCEPTED);
+        assertThat(cheapSellOrder.getStatus()).isEqualTo(Order.Status.FILLED);
+        assertThat(expensiveSellOrder.getStatus()).isEqualTo(Order.Status.ACCEPTED);
     }
 
     @Test
@@ -185,7 +184,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
-                        OrderSide.BUY,
+                        Order.Side.BUY,
                         money("100"),
                         quantity("10")
                 )
@@ -196,8 +195,8 @@ class OrderPlacementIntegrationTest {
         OrderEntity newerSellOrder = orderDao.findById(newerSellOrderId).orElseThrow();
 
         assertThat(trade.getSellOrderId()).isEqualTo(olderSellOrderId);
-        assertThat(olderSellOrder.getStatus()).isEqualTo(OrderStatus.FILLED);
-        assertThat(newerSellOrder.getStatus()).isEqualTo(OrderStatus.ACCEPTED);
+        assertThat(olderSellOrder.getStatus()).isEqualTo(Order.Status.FILLED);
+        assertThat(newerSellOrder.getStatus()).isEqualTo(Order.Status.ACCEPTED);
     }
 
     @Test
@@ -210,7 +209,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
-                        OrderSide.BUY,
+                        Order.Side.BUY,
                         money("100"),
                         quantity("10")
                 )
@@ -221,9 +220,9 @@ class OrderPlacementIntegrationTest {
         TraderAccountEntity buyerAccount = traderAccountDao.findById(buyerId).orElseThrow();
         TradeEntity trade = singleTrade();
 
-        assertThat(buyOrder.getStatus()).isEqualTo(OrderStatus.PARTIALLY_FILLED);
+        assertThat(buyOrder.getStatus()).isEqualTo(Order.Status.PARTIALLY_FILLED);
         assertThat(buyOrder.getRemainingQuantity()).isEqualByComparingTo("5");
-        assertThat(sellOrder.getStatus()).isEqualTo(OrderStatus.FILLED);
+        assertThat(sellOrder.getStatus()).isEqualTo(Order.Status.FILLED);
         assertThat(trade.getQuantity()).isEqualByComparingTo("5");
         assertThat(buyerAccount.getCashBalance()).isEqualByComparingTo("9500");
         assertThat(buyerAccount.getReservedCash()).isEqualByComparingTo("500");
@@ -237,7 +236,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         sellerId,
                         SYMBOL,
-                        OrderSide.SELL,
+                        Order.Side.SELL,
                         money("100"),
                         quantity("10")
                 )
@@ -249,7 +248,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         firstBuyerId,
                         SYMBOL,
-                        OrderSide.BUY,
+                        Order.Side.BUY,
                         money("100"),
                         quantity("4")
                 )
@@ -258,7 +257,7 @@ class OrderPlacementIntegrationTest {
                 new PlaceLimitOrderRequest(
                         secondBuyerId,
                         SYMBOL,
-                        OrderSide.BUY,
+                        Order.Side.BUY,
                         money("100"),
                         quantity("6")
                 )
@@ -269,9 +268,9 @@ class OrderPlacementIntegrationTest {
         StockPositionEntity sellerPosition = stockPositionDao.findByTraderIdAndSymbol(sellerId, SYMBOL).orElseThrow();
         List<TradeEntity> trades = tradeDao.findAll();
 
-        assertThat(sellOrder.getStatus()).isEqualTo(OrderStatus.FILLED);
+        assertThat(sellOrder.getStatus()).isEqualTo(Order.Status.FILLED);
         assertThat(sellOrder.getRemainingQuantity()).isEqualByComparingTo("0");
-        assertThat(secondBuyOrder.getStatus()).isEqualTo(OrderStatus.FILLED);
+        assertThat(secondBuyOrder.getStatus()).isEqualTo(Order.Status.FILLED);
         assertThat(sellerPosition.getQuantity()).isEqualByComparingTo("0");
         assertThat(sellerPosition.getReservedQuantity()).isEqualByComparingTo("0");
         assertThat(trades).hasSize(2);
@@ -298,11 +297,11 @@ class OrderPlacementIntegrationTest {
                 orderId,
                 sellerId,
                 SYMBOL,
-                OrderSide.SELL,
+                Order.Side.SELL,
                 money(price),
                 quantity(orderQuantity),
                 quantity(orderQuantity),
-                OrderStatus.ACCEPTED,
+                Order.Status.ACCEPTED,
                 createdAt
         ));
         return orderId;

@@ -1,7 +1,6 @@
 package dev.exchangelab.infrastructure.persistence.query;
 
-import dev.exchangelab.domain.model.OrderSide;
-import dev.exchangelab.domain.model.OrderStatus;
+import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
@@ -12,9 +11,9 @@ import java.util.List;
 @Repository
 public class OrderQueryImpl implements OrderQuery {
 
-    private static final List<OrderStatus> MATCHABLE_STATUSES = List.of(
-            OrderStatus.ACCEPTED,
-            OrderStatus.PARTIALLY_FILLED
+    private static final List<Order.Status> MATCHABLE_STATUSES = List.of(
+            Order.Status.ACCEPTED,
+            Order.Status.PARTIALLY_FILLED
     );
 
     private final EntityManager entityManager;
@@ -38,7 +37,7 @@ public class OrderQueryImpl implements OrderQuery {
                         """, OrderEntity.class)
                 .setParameter("symbol", symbol)
                 .setParameter("matchableStatuses", MATCHABLE_STATUSES)
-                .setParameter("side", OrderSide.BUY)
+                .setParameter("side", Order.Side.BUY)
                 .setParameter("sellLimitPrice", sellLimitPrice)
                 .getResultList();
     }
@@ -58,7 +57,7 @@ public class OrderQueryImpl implements OrderQuery {
                         """, OrderEntity.class)
                 .setParameter("symbol", symbol)
                 .setParameter("matchableStatuses", MATCHABLE_STATUSES)
-                .setParameter("side", OrderSide.SELL)
+                .setParameter("side", Order.Side.SELL)
                 .setParameter("buyLimitPrice", buyLimitPrice)
                 .getResultList();
     }

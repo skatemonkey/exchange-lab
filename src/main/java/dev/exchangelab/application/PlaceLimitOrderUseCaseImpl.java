@@ -1,12 +1,11 @@
 package dev.exchangelab.application;
 
+import dev.exchangelab.domain.model.MatchResult;
 import dev.exchangelab.domain.model.Order;
-import dev.exchangelab.domain.model.OrderStatus;
+import dev.exchangelab.domain.model.OrderBook;
 import dev.exchangelab.domain.model.Trade;
 import dev.exchangelab.domain.repository.OrderRepository;
 import dev.exchangelab.domain.repository.TradeRepository;
-import dev.exchangelab.domain.service.MatchResult;
-import dev.exchangelab.domain.service.MatchingEngine;
 import dev.exchangelab.domain.service.OrderReservationService;
 import dev.exchangelab.domain.service.TradeSettlementService;
 import dev.exchangelab.presentation.PlaceLimitOrderRequest;
@@ -15,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,29 +22,30 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class PlaceLimitOrderService implements PlaceLimitOrderUseCase {
+public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
 
     private final OrderRepository orderRepository;
     private final TradeRepository tradeRepository;
     private final OrderReservationService orderReservationService;
-    private final MatchingEngine matchingEngine;
     private final TradeSettlementService tradeSettlementService;
 
     @Override
     @Transactional
     public PlaceLimitOrderResponse placeLimitOrder(PlaceLimitOrderRequest request) {
-        validateLimitOrderRequest(request);
-        orderReservationService.reserve(
+        requireRequest(request);
+
+        Order incomingOrder = Order.createLimit(
                 request.traderId(),
                 request.symbol(),
                 request.side(),
                 request.limitPrice(),
                 request.quantity()
         );
+        orderReservationService.reserve(incomingOrder);
 
-        Order incomingOrder = createAcceptedOrder(request);
-        List<Order> matchingOrderList = findMatchingOrderList(request);
-        MatchResult matchResult = matchingEngine.match(incomingOrder, matchingOrderList);
+        List<Order> matchingOrderList = findMatchingOrderList(incomingOrder);
+        OrderBook orderBook = new OrderBook(matchingOrderList);
+        MatchResult matchResult = orderBook.match(incomingOrder);
 
         tradeSettlementService.settle(
                 matchResult.executedTrades(),
@@ -64,52 +62,23 @@ public class PlaceLimitOrderService implements PlaceLimitOrderUseCase {
         return PlaceLimitOrderResponse.from(matchResult.incomingOrder());
     }
 
-    private void validateLimitOrderRequest(PlaceLimitOrderRequest request) {
+    private void requireRequest(PlaceLimitOrderRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Order request is required");
         }
-        if (request.traderId() == null) {
-            throw new IllegalArgumentException("Trader id is required");
-        }
-        if (request.symbol() == null || request.symbol().isBlank()) {
-            throw new IllegalArgumentException("Stock symbol is required");
-        }
-        if (request.side() == null) {
-            throw new IllegalArgumentException("Order side is required");
-        }
-        if (request.limitPrice() == null || request.limitPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Limit price must be greater than zero");
-        }
-        if (request.quantity() == null || request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero");
-        }
     }
 
-    private List<Order> findMatchingOrderList(PlaceLimitOrderRequest request) {
-        return switch (request.side()) {
+    private List<Order> findMatchingOrderList(Order incomingOrder) {
+        return switch (incomingOrder.getSide()) {
             case BUY -> orderRepository.findMatchableSellOrders(
-                    request.symbol(),
-                    request.limitPrice()
+                    incomingOrder.getSymbol(),
+                    incomingOrder.getLimitPrice()
             );
             case SELL -> orderRepository.findMatchableBuyOrders(
-                    request.symbol(),
-                    request.limitPrice()
+                    incomingOrder.getSymbol(),
+                    incomingOrder.getLimitPrice()
             );
         };
-    }
-
-    private Order createAcceptedOrder(PlaceLimitOrderRequest request) {
-        return new Order(
-                UUID.randomUUID(),
-                request.traderId(),
-                request.symbol(),
-                request.side(),
-                request.limitPrice(),
-                request.quantity(),
-                request.quantity(),
-                OrderStatus.ACCEPTED,
-                Instant.now()
-        );
     }
 
     private void storeOrderAndTradeRecords(

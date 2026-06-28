@@ -1,6 +1,6 @@
 package dev.exchangelab.presentation;
 
-import dev.exchangelab.domain.model.OrderSide;
+import dev.exchangelab.domain.model.Order;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import java.util.UUID;
 public record PlaceLimitOrderRequest(
         UUID traderId,
         String symbol,
-        OrderSide side,
+        Order.Side side,
         BigDecimal limitPrice,
         BigDecimal quantity
 ) {

@@ -1,7 +1,4 @@
-package dev.exchangelab.domain.service;
-
-import dev.exchangelab.domain.model.Order;
-import dev.exchangelab.domain.model.Trade;
+package dev.exchangelab.domain.model;
 
 import java.util.List;
 

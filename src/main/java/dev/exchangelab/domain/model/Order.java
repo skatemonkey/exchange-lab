@@ -14,12 +14,59 @@ public class Order {
     private final UUID orderId;
     private final UUID traderId;
     private final String symbol;
-    private final OrderSide side;
+    private final Side side;
     private final BigDecimal limitPrice;
     private final BigDecimal quantity;
     private BigDecimal remainingQuantity;
-    private OrderStatus status;
+    private Status status;
     private final Instant createdAt;
+
+    public enum Side {
+        BUY,
+        SELL
+    }
+
+    public enum Status {
+        ACCEPTED,
+        PARTIALLY_FILLED,
+        FILLED
+    }
+
+    public static Order createLimit(
+            UUID traderId,
+            String symbol,
+            Side side,
+            BigDecimal limitPrice,
+            BigDecimal quantity
+    ) {
+        if (traderId == null) {
+            throw new IllegalArgumentException("Trader id is required");
+        }
+        if (symbol == null || symbol.isBlank()) {
+            throw new IllegalArgumentException("Stock symbol is required");
+        }
+        if (side == null) {
+            throw new IllegalArgumentException("Order side is required");
+        }
+        if (limitPrice == null || limitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Limit price must be greater than zero");
+        }
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+
+        return new Order(
+                UUID.randomUUID(),
+                traderId,
+                symbol,
+                side,
+                limitPrice,
+                quantity,
+                quantity,
+                Status.ACCEPTED,
+                Instant.now()
+        );
+    }
 
     public void fill(BigDecimal filledQuantity) {
         if (filledQuantity == null || filledQuantity.compareTo(BigDecimal.ZERO) <= 0) {
@@ -35,15 +82,15 @@ public class Order {
 
     private void refreshStatus() {
         if (remainingQuantity.compareTo(BigDecimal.ZERO) == 0) {
-            status = OrderStatus.FILLED;
+            status = Status.FILLED;
             return;
         }
 
         if (remainingQuantity.compareTo(quantity) < 0) {
-            status = OrderStatus.PARTIALLY_FILLED;
+            status = Status.PARTIALLY_FILLED;
             return;
         }
 
-        status = OrderStatus.ACCEPTED;
+        status = Status.ACCEPTED;
     }
 }
