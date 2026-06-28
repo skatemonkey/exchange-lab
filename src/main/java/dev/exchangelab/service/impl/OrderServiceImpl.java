@@ -15,6 +15,7 @@ import dev.exchangelab.repository.dao.TraderAccountDao;
 import dev.exchangelab.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -36,6 +37,7 @@ public class OrderServiceImpl implements OrderService {
     private final TradeDao tradeDao;
 
     @Override
+    @Transactional
     public PlaceLimitOrderResponse placeLimitOrder(PlaceLimitOrderRequest request) {
         /*
          * Planned order flow:

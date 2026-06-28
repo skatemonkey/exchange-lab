@@ -12,6 +12,11 @@ import java.util.List;
 @Repository
 public class OrderQueryImpl implements OrderQuery {
 
+    private static final List<OrderStatus> MATCHABLE_STATUSES = List.of(
+            OrderStatus.ACCEPTED,
+            OrderStatus.PARTIALLY_FILLED
+    );
+
     private final EntityManager entityManager;
 
     public OrderQueryImpl(EntityManager entityManager) {
@@ -25,13 +30,14 @@ public class OrderQueryImpl implements OrderQuery {
                         select o
                         from OrderEntity o
                         where o.symbol = :symbol
-                          and o.status = :status
+                          and o.status in :matchableStatuses
                           and o.side = :side
+                          and o.remainingQuantity > 0
                           and o.limitPrice >= :sellLimitPrice
                         order by o.limitPrice desc, o.createdAt asc
                         """, OrderEntity.class)
                 .setParameter("symbol", symbol)
-                .setParameter("status", OrderStatus.ACCEPTED)
+                .setParameter("matchableStatuses", MATCHABLE_STATUSES)
                 .setParameter("side", OrderSide.BUY)
                 .setParameter("sellLimitPrice", sellLimitPrice)
                 .getResultList();
@@ -44,13 +50,14 @@ public class OrderQueryImpl implements OrderQuery {
                         select o
                         from OrderEntity o
                         where o.symbol = :symbol
-                          and o.status = :status
+                          and o.status in :matchableStatuses
                           and o.side = :side
+                          and o.remainingQuantity > 0
                           and o.limitPrice <= :buyLimitPrice
                         order by o.limitPrice asc, o.createdAt asc
                         """, OrderEntity.class)
                 .setParameter("symbol", symbol)
-                .setParameter("status", OrderStatus.ACCEPTED)
+                .setParameter("matchableStatuses", MATCHABLE_STATUSES)
                 .setParameter("side", OrderSide.SELL)
                 .setParameter("buyLimitPrice", buyLimitPrice)
                 .getResultList();
