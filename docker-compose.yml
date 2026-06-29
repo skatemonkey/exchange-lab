@@ -16,6 +16,12 @@ services:
       - "9848:9848"
       - "18080:8080"
 
+  sentinel-dashboard:
+    image: bladex/sentinel-dashboard:latest
+    container_name: exchange-lab-sentinel-dashboard
+    ports:
+      - "8858:8858"
+
   postgres:
     image: postgres:18
     container_name: exchange-lab-postgres

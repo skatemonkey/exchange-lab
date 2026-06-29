@@ -6,6 +6,11 @@ spring:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
         group: ${NACOS_DISCOVERY_GROUP:DEFAULT_GROUP}
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:localhost:8858}
+        port: ${SENTINEL_TRANSPORT_PORT:8719}
+      eager: true
   datasource:
     url: jdbc:postgresql://localhost:5432/exchange_lab
     username: exchange_lab
