@@ -43,7 +43,7 @@ Future learning and implementation areas include:
 | ⚪ | Infrastructure tools such as Nginx |
 | 🟢 | Prometheus and Grafana for metrics and dashboards |
 | ⚪ | Loki and Alloy for log collection and search |
-| ⚪ | Apache SkyWalking for distributed tracing and observability |
+| 🟢 | Apache SkyWalking for distributed tracing and observability |
 | ⚪ | Seata for distributed transaction learning |
 | ⚪ | Spring Batch for batch processing |
 | ⚪ | ElasticJob for distributed job scheduling |
@@ -125,15 +125,21 @@ Current phase 4 results include:
 4. Basic dashboard panels for service health, request rate, errors, latency,
    CPU, and memory.
 
-### ⚪ Phase 5: Distributed Tracing
+### 🟢 Phase 5: Distributed Tracing
 
 > Add request tracing and service topology with Apache SkyWalking.
 
 Phase 5 focuses on tracing after the metrics dashboard exists.
 
-Planned scope:
+Status: completed for now.
 
-1. SkyWalking backend and UI.
-2. Java agent setup for `exchange-app` and `exchange-gateway`.
-3. Trace requests from gateway to backend.
-4. Use traces to inspect slow requests and service relationships.
+Current phase 5 results include:
+
+1. SkyWalking OAP backend, UI, and BanyanDB storage.
+2. Micrometer tracing from `exchange-app` and `exchange-gateway`, exporting
+   Zipkin-format traces into SkyWalking OAP.
+3. Zipkin-compatible collection and query ports exposed through SkyWalking OAP.
+4. Optional `bootRun` tracing switch for `exchange-app` and
+   `exchange-gateway`.
+5. Trace requests from gateway to backend.
+6. Use traces to inspect slow requests and service relationships.

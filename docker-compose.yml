@@ -48,6 +48,45 @@ services:
     depends_on:
       - prometheus
 
+  skywalking-banyandb:
+    image: apache/skywalking-banyandb:0.10.2
+    container_name: exchange-lab-skywalking-banyandb
+    command: standalone
+    ports:
+      - "17912:17912"
+      - "17913:17913"
+    volumes:
+      - skywalking_banyandb_data:/tmp
+
+  skywalking-oap:
+    image: apache/skywalking-oap-server:10.4.0-java21
+    container_name: exchange-lab-skywalking-oap
+    environment:
+      SW_STORAGE: banyandb
+      SW_STORAGE_BANYANDB_TARGETS: skywalking-banyandb:17912
+      SW_RECEIVER_ZIPKIN: default
+      SW_QUERY_ZIPKIN: default
+      SW_HEALTH_CHECKER: default
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "11800:11800"
+      - "12800:12800"
+      - "9411:9411"
+      - "9412:9412"
+    depends_on:
+      - skywalking-banyandb
+
+  skywalking-ui:
+    image: apache/skywalking-ui:10.4.0-java21
+    container_name: exchange-lab-skywalking-ui
+    environment:
+      SW_OAP_ADDRESS: http://skywalking-oap:12800
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    ports:
+      - "18086:8080"
+    depends_on:
+      - skywalking-oap
+
   postgres:
     image: postgres:18
     container_name: exchange-lab-postgres
@@ -68,3 +107,4 @@ services:
 volumes:
   postgres_data:
   grafana_data:
+  skywalking_banyandb_data:

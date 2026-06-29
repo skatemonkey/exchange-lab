@@ -27,6 +27,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
     implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-sentinel'
+    implementation 'org.springframework.boot:spring-boot-starter-zipkin'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
     runtimeOnly 'org.postgresql:postgresql'
@@ -47,4 +48,19 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('bootRun') {
+    def skywalkingEnabled = providers.gradleProperty('skywalking.enabled')
+            .map { it.toBoolean() }
+            .getOrElse(false)
+
+    if (skywalkingEnabled) {
+        def zipkinEndpoint = providers.gradleProperty('skywalking.zipkinEndpoint').getOrElse('http://127.0.0.1:9411/api/v2/spans')
+
+        systemProperty 'management.tracing.export.enabled', 'true'
+        systemProperty 'management.tracing.export.zipkin.enabled', 'true'
+        systemProperty 'management.tracing.sampling.probability', '1.0'
+        systemProperty 'management.tracing.export.zipkin.endpoint', zipkinEndpoint
+    }
 }
