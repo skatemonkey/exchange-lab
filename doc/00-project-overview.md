@@ -42,6 +42,8 @@ Future learning and implementation areas include:
 | 🟡 | Spring Cloud Alibaba tools such as Nacos and Sentinel |
 | ⚪ | Infrastructure tools such as Nginx |
 | ⚪ | Observability, metrics, tracing, and dashboards |
+| ⚪ | Apache SkyWalking for distributed tracing and observability |
+| ⚪ | Seata for distributed transaction learning |
 | ⚪ | Load testing and performance profiling |
 | ⚪ | JVM optimization |
 
