@@ -22,6 +22,32 @@ services:
     ports:
       - "8858:8858"
 
+  prometheus:
+    image: prom/prometheus:v3.12.0
+    container_name: exchange-lab-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:13.1.0
+    container_name: exchange-lab-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
   postgres:
     image: postgres:18
     container_name: exchange-lab-postgres
@@ -41,3 +67,4 @@ services:
 
 volumes:
   postgres_data:
+  grafana_data:

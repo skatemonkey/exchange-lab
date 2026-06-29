@@ -41,7 +41,7 @@ Future learning and implementation areas include:
 | 🟢 | Spring ecosystem tools such as Spring Cloud Gateway |
 | 🟢 | Spring Cloud Alibaba tools such as Nacos and Sentinel |
 | ⚪ | Infrastructure tools such as Nginx |
-| 🟡 | Prometheus and Grafana for metrics and dashboards |
+| 🟢 | Prometheus and Grafana for metrics and dashboards |
 | ⚪ | Loki and Alloy for log collection and search |
 | ⚪ | Apache SkyWalking for distributed tracing and observability |
 | ⚪ | Seata for distributed transaction learning |
@@ -108,14 +108,16 @@ Current phase 3 results include:
 The project is still a modular monolith plus gateway. The backend has not been
 split into multiple business microservices yet.
 
-### 🟡 Phase 4: Metrics And Dashboards
+### 🟢 Phase 4: Metrics And Dashboards
 
 > Add a whole-system overview using Prometheus and Grafana.
 
 Phase 4 focuses on metrics before tracing. The goal is to stop checking each
 tool one by one and start seeing the system from one dashboard.
 
-Planned scope:
+Status: completed for now.
+
+Current phase 4 results include:
 
 1. Prometheus for collecting metrics.
 2. Grafana for dashboards.
