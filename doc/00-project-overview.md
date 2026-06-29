@@ -38,12 +38,15 @@ Future learning and implementation areas include:
 | ⚪ | High-concurrency request handling |
 | ⚪ | Kafka for event streaming |
 | ⚪ | Redis for caching or fast coordination use cases |
-| 🟡 | Spring ecosystem tools such as Spring Cloud Gateway |
-| 🟡 | Spring Cloud Alibaba tools such as Nacos and Sentinel |
+| 🟢 | Spring ecosystem tools such as Spring Cloud Gateway |
+| 🟢 | Spring Cloud Alibaba tools such as Nacos and Sentinel |
 | ⚪ | Infrastructure tools such as Nginx |
-| ⚪ | Observability, metrics, tracing, and dashboards |
+| 🟡 | Prometheus and Grafana for metrics and dashboards |
+| ⚪ | Loki and Alloy for log collection and search |
 | ⚪ | Apache SkyWalking for distributed tracing and observability |
 | ⚪ | Seata for distributed transaction learning |
+| ⚪ | Spring Batch for batch processing |
+| ⚪ | ElasticJob for distributed job scheduling |
 | ⚪ | Load testing and performance profiling |
 | ⚪ | JVM optimization |
 
@@ -53,7 +56,7 @@ real problem in the trading platform.
 
 ## 3. Development Roadmap
 
-### Phase 1: Controller-Service-Repository Baseline
+### 🟢 Phase 1: Controller-Service-Repository Baseline
 
 > Build the first limit order API using the familiar Spring Boot
 > controller-service-repository structure.
@@ -67,7 +70,7 @@ The simple baseline model is now in place: controller, service, repository,
 entities, Postgres Docker setup, and Flyway schema migration. The next phase is
 to rewrite and grow this code in a domain-driven design style.
 
-### Phase 2: First Domain-Driven Design Pass
+### 🟢 Phase 2: First Domain-Driven Design Pass
 
 > Reorganize the first limit order flow into a clearer DDD-style structure.
 
@@ -86,16 +89,49 @@ Current phase 2 results include:
 - `infrastructure`: JPA entities, DAOs, custom queries, and repository
   implementations.
 
-### Phase 3: Spring Cloud Alibaba Infrastructure Foundation
+### 🟢 Phase 3: Spring Cloud Alibaba Infrastructure Foundation
 
 > Add common Spring Cloud Alibaba infrastructure around the monolith first.
 
 Phase 3 keeps the project as a monolith, but starts introducing infrastructure
 patterns that are useful before splitting into multiple services.
 
-1. Nacos for externalized configuration first, and service discovery later.
-2. Sentinel for API flow control, rate limiting, and protection rules.
-3. Spring Cloud Gateway as a separate entry point that can route to the monolith
-  first.
-4. Keep the domain and application code stable unless an infrastructure boundary
-  needs a small adapter.
+Status: completed for now at commit `1db0958`.
+
+Current phase 3 results include:
+
+1. Nacos service discovery for `exchange-app` and `exchange-gateway`.
+2. Sentinel dashboard integration for API protection learning.
+3. Spring Cloud Gateway as a separate module and entry point.
+4. Gateway routing from `/api/**` to the `exchange-lab` backend service.
+
+The project is still a modular monolith plus gateway. The backend has not been
+split into multiple business microservices yet.
+
+### 🟡 Phase 4: Metrics And Dashboards
+
+> Add a whole-system overview using Prometheus and Grafana.
+
+Phase 4 focuses on metrics before tracing. The goal is to stop checking each
+tool one by one and start seeing the system from one dashboard.
+
+Planned scope:
+
+1. Prometheus for collecting metrics.
+2. Grafana for dashboards.
+3. Actuator metrics from `exchange-app` and `exchange-gateway`.
+4. Basic dashboard panels for service health, request rate, errors, latency,
+   CPU, and memory.
+
+### ⚪ Phase 5: Distributed Tracing
+
+> Add request tracing and service topology with Apache SkyWalking.
+
+Phase 5 focuses on tracing after the metrics dashboard exists.
+
+Planned scope:
+
+1. SkyWalking backend and UI.
+2. Java agent setup for `exchange-app` and `exchange-gateway`.
+3. Trace requests from gateway to backend.
+4. Use traces to inspect slow requests and service relationships.

@@ -21,6 +21,12 @@ This is only for local development.
 - Exchange app URL: http://localhost:8080
 - Exchange gateway URL: http://localhost:9000
 
+Start infrastructure first:
+
+```powershell
+docker compose up -d
+```
+
 Run the backend app:
 
 ```powershell
