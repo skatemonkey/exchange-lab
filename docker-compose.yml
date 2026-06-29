@@ -1,4 +1,21 @@
 services:
+  nacos:
+    image: nacos/nacos-server:v3.2.2
+    container_name: exchange-lab-nacos
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      NACOS_AUTH_TOKEN: "ZXhjaGFuZ2UtbGFiLWRldi1vbmx5LW5hY29zLWF1dGgtdG9rZW4tYXQtbGVhc3QtMzItYnl0ZXM="
+      NACOS_AUTH_IDENTITY_KEY: "serverIdentity"
+      NACOS_AUTH_IDENTITY_VALUE: "exchange-lab"
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      JVM_XMN: 128m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "18080:8080"
+
   postgres:
     image: postgres:18
     container_name: exchange-lab-postgres

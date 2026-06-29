@@ -1,6 +1,11 @@
 spring:
   application:
     name: exchange-lab
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        group: ${NACOS_DISCOVERY_GROUP:DEFAULT_GROUP}
   datasource:
     url: jdbc:postgresql://localhost:5432/exchange_lab
     username: exchange_lab
