@@ -1,2 +1,3 @@
 rootProject.name = 'exchange-lab'
 include 'exchange-app'
+include 'exchange-gateway'

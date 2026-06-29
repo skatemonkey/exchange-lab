@@ -1,0 +1,25 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: exchange-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        group: ${NACOS_DISCOVERY_GROUP:DEFAULT_GROUP}
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: exchange-app-api
+              uri: lb://exchange-lab
+              predicates:
+                - Path=/api/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

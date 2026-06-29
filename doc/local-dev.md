@@ -15,3 +15,20 @@ This is only for local development.
 - Password: `sentinel`
 
 This is only for local development.
+
+## Spring Boot Apps
+
+- Exchange app URL: http://localhost:8080
+- Exchange gateway URL: http://localhost:9000
+
+Run the backend app:
+
+```powershell
+.\gradlew.bat :exchange-app:bootRun
+```
+
+Run the gateway:
+
+```powershell
+.\gradlew.bat :exchange-gateway:bootRun
+```
