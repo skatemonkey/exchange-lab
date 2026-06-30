@@ -2,6 +2,8 @@ package dev.exchangelab;
 
 import dev.exchangelab.application.MatchAcceptedOrderUseCase;
 import dev.exchangelab.application.OrderAcceptedEventPublisher;
+import dev.exchangelab.application.PlaceLimitOrderCommand;
+import dev.exchangelab.application.PlaceLimitOrderResult;
 import dev.exchangelab.application.PlaceLimitOrderUseCase;
 import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.infrastructure.persistence.dao.OrderDao;
@@ -12,8 +14,6 @@ import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
 import dev.exchangelab.infrastructure.persistence.entity.StockPositionEntity;
 import dev.exchangelab.infrastructure.persistence.entity.TradeEntity;
 import dev.exchangelab.infrastructure.persistence.entity.TraderAccountEntity;
-import dev.exchangelab.presentation.dto.PlaceLimitOrderRequest;
-import dev.exchangelab.presentation.dto.PlaceLimitOrderResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,8 +73,8 @@ class OrderPlacementIntegrationTest {
     void acceptsUnmatchedBuyOrderAndReservesCash() {
         UUID buyerId = traderWithCash("10000");
 
-        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult response = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         buyerId,
                         SYMBOL,
                         Order.Side.BUY,
@@ -100,8 +100,8 @@ class OrderPlacementIntegrationTest {
         UUID sellerId = traderWithCash("0");
         UUID sellOrderId = restingSellOrder(sellerId, "100", "10", Instant.parse("2026-01-01T00:00:00Z"));
 
-        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult response = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         buyerId,
                         SYMBOL,
                         Order.Side.BUY,
@@ -151,8 +151,8 @@ class OrderPlacementIntegrationTest {
                 Instant.parse("2026-01-01T00:01:00Z")
         );
 
-        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult response = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         buyerId,
                         SYMBOL,
                         Order.Side.BUY,
@@ -190,8 +190,8 @@ class OrderPlacementIntegrationTest {
                 Instant.parse("2026-01-01T00:01:00Z")
         );
 
-        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult response = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         buyerId,
                         SYMBOL,
                         Order.Side.BUY,
@@ -216,8 +216,8 @@ class OrderPlacementIntegrationTest {
         UUID sellerId = traderWithCash("0");
         UUID sellOrderId = restingSellOrder(sellerId, "100", "5", Instant.parse("2026-01-01T00:00:00Z"));
 
-        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult response = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         buyerId,
                         SYMBOL,
                         Order.Side.BUY,
@@ -244,8 +244,8 @@ class OrderPlacementIntegrationTest {
     void matchesPartiallyFilledRestingOrderLater() {
         UUID sellerId = traderWithCash("0");
         seedPosition(sellerId, "10", "0");
-        PlaceLimitOrderResponse sellResponse = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult sellResponse = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         sellerId,
                         SYMBOL,
                         Order.Side.SELL,
@@ -257,8 +257,8 @@ class OrderPlacementIntegrationTest {
         UUID firstBuyerId = traderWithCash("10000");
         UUID secondBuyerId = traderWithCash("10000");
 
-        PlaceLimitOrderResponse firstBuyResponse = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult firstBuyResponse = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         firstBuyerId,
                         SYMBOL,
                         Order.Side.BUY,
@@ -267,8 +267,8 @@ class OrderPlacementIntegrationTest {
                 )
         );
         matchAcceptedOrderUseCase.matchAcceptedOrder(firstBuyResponse.orderId());
-        PlaceLimitOrderResponse secondBuyResponse = placeLimitOrderUseCase.placeLimitOrder(
-                new PlaceLimitOrderRequest(
+        PlaceLimitOrderResult secondBuyResponse = placeLimitOrderUseCase.placeLimitOrder(
+                new PlaceLimitOrderCommand(
                         secondBuyerId,
                         SYMBOL,
                         Order.Side.BUY,

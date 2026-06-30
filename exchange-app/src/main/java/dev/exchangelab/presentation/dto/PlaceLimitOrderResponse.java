@@ -1,5 +1,6 @@
 package dev.exchangelab.presentation.dto;
 
+import dev.exchangelab.application.PlaceLimitOrderResult;
 import dev.exchangelab.domain.model.Order;
 
 import java.math.BigDecimal;
@@ -15,30 +16,15 @@ public record PlaceLimitOrderResponse(
         Order.Status status
 ) {
 
-    public static PlaceLimitOrderResponse accepted(
-            UUID orderId,
-            PlaceLimitOrderRequest request
-    ) {
+    public static PlaceLimitOrderResponse from(PlaceLimitOrderResult result) {
         return new PlaceLimitOrderResponse(
-                orderId,
-                request.traderId(),
-                request.symbol(),
-                request.side(),
-                request.limitPrice(),
-                request.quantity(),
-                Order.Status.ACCEPTED
-        );
-    }
-
-    public static PlaceLimitOrderResponse from(Order order) {
-        return new PlaceLimitOrderResponse(
-                order.getOrderId(),
-                order.getTraderId(),
-                order.getSymbol(),
-                order.getSide(),
-                order.getLimitPrice(),
-                order.getQuantity(),
-                order.getStatus()
+                result.orderId(),
+                result.traderId(),
+                result.symbol(),
+                result.side(),
+                result.limitPrice(),
+                result.quantity(),
+                result.status()
         );
     }
 }

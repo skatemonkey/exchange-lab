@@ -161,3 +161,8 @@ Current phase 6 results include:
    `MatchAcceptedOrderUseCase`.
 6. Keep Kafka as the foundation for future order, trade, settlement, and audit
    events.
+
+Next Kafka hardening item:
+
+- Add idempotency for consumed events, so duplicate `OrderAcceptedEvent`
+  messages cannot trigger duplicate matching or duplicate trades.

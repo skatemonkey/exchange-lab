@@ -1,5 +1,7 @@
 package dev.exchangelab.presentation;
 
+import dev.exchangelab.application.PlaceLimitOrderCommand;
+import dev.exchangelab.application.PlaceLimitOrderResult;
 import dev.exchangelab.application.PlaceLimitOrderUseCase;
 import dev.exchangelab.presentation.dto.PlaceLimitOrderRequest;
 import dev.exchangelab.presentation.dto.PlaceLimitOrderResponse;
@@ -23,7 +25,17 @@ public class OrderController {
     public ResponseEntity<PlaceLimitOrderResponse> placeLimitOrder(
             @RequestBody PlaceLimitOrderRequest request
     ) {
-        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(request);
-        return ResponseEntity.accepted().body(response);
+        PlaceLimitOrderResult result = placeLimitOrderUseCase.placeLimitOrder(toCommand(request));
+        return ResponseEntity.accepted().body(PlaceLimitOrderResponse.from(result));
+    }
+
+    private PlaceLimitOrderCommand toCommand(PlaceLimitOrderRequest request) {
+        return new PlaceLimitOrderCommand(
+                request.traderId(),
+                request.symbol(),
+                request.side(),
+                request.limitPrice(),
+                request.quantity()
+        );
     }
 }
