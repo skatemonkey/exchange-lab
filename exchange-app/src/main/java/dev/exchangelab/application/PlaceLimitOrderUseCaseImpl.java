@@ -1,12 +1,9 @@
 package dev.exchangelab.application;
 
-import dev.exchangelab.domain.model.MatchResult;
+import dev.exchangelab.domain.event.OrderAcceptedEvent;
 import dev.exchangelab.domain.model.Order;
-import dev.exchangelab.domain.model.OrderBook;
 import dev.exchangelab.domain.model.Portfolio;
-import dev.exchangelab.domain.model.Settlement;
 import dev.exchangelab.domain.repository.OrderRepository;
-import dev.exchangelab.domain.repository.TradeRepository;
 import dev.exchangelab.presentation.dto.PlaceLimitOrderRequest;
 import dev.exchangelab.presentation.dto.PlaceLimitOrderResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
 
     private final OrderRepository orderRepository;
-    private final TradeRepository tradeRepository;
     private final PortfolioStore portfolioStore;
-    private final SettlementStore settlementStore;
+    private final OrderAcceptedEventPublisher orderAcceptedEventPublisher;
 
     @Override
     @Transactional
@@ -38,17 +34,10 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
         portfolio.reserveFor(incomingOrder);
         portfolioStore.save(portfolio);
 
-        OrderBook orderBook = orderRepository.findOrderBookFor(incomingOrder);
-        MatchResult matchResult = orderBook.match(incomingOrder);
+        orderRepository.save(incomingOrder);
+        orderAcceptedEventPublisher.publish(OrderAcceptedEvent.from(incomingOrder));
 
-        Settlement settlement = settlementStore.loadFor(matchResult);
-        settlement.settle(matchResult);
-        settlementStore.save(settlement);
-
-        orderRepository.saveAll(matchResult.ordersToSave());
-        tradeRepository.saveAll(matchResult.executedTrades());
-
-        return PlaceLimitOrderResponse.from(matchResult.incomingOrder());
+        return PlaceLimitOrderResponse.from(incomingOrder);
     }
 
     private void requireRequest(PlaceLimitOrderRequest request) {

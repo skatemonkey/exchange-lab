@@ -7,6 +7,7 @@
 > - [3. Login Notes](#3-login-notes)
 > - [4. Observability Folder](#4-observability-folder)
 > - [5. SkyWalking Tracing](#5-skywalking-tracing)
+> - [6. Kafka Event Flow](#6-kafka-event-flow)
 
 ## 1. URLs
 
@@ -132,3 +133,24 @@ SkyWalking also exposes a Zipkin-compatible query API at
 
 In tracing, the backend appears as `exchange-lab` and the gateway appears as
 `exchange-gateway`.
+
+## 6. Kafka Event Flow
+
+Current topic:
+
+```text
+orders.accepted
+```
+
+Current flow:
+
+```text
+OrderController
+-> PlaceLimitOrderUseCase
+-> save accepted order and reserve portfolio
+-> publish OrderAcceptedEvent
+-> orders.accepted topic
+-> OrderAcceptedKafkaConsumer
+-> MatchAcceptedOrderUseCase
+-> match, settle, and save trades
+```

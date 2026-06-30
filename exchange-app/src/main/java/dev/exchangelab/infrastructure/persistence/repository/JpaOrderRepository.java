@@ -10,12 +10,19 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
 public class JpaOrderRepository implements OrderRepository {
 
     private final OrderDao orderDao;
+
+    @Override
+    public Optional<Order> findById(UUID orderId) {
+        return orderDao.findById(orderId).map(this::toDomain);
+    }
 
     @Override
     public OrderBook findOrderBookFor(Order incomingOrder) {
@@ -45,6 +52,11 @@ public class JpaOrderRepository implements OrderRepository {
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void save(Order order) {
+        orderDao.save(toEntity(order));
     }
 
     @Override

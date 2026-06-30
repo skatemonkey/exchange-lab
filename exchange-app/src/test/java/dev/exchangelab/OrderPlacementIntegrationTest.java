@@ -1,5 +1,7 @@
 package dev.exchangelab;
 
+import dev.exchangelab.application.MatchAcceptedOrderUseCase;
+import dev.exchangelab.application.OrderAcceptedEventPublisher;
 import dev.exchangelab.application.PlaceLimitOrderUseCase;
 import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.infrastructure.persistence.dao.OrderDao;
@@ -17,6 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -40,6 +45,9 @@ class OrderPlacementIntegrationTest {
 
     @Autowired
     private PlaceLimitOrderUseCase placeLimitOrderUseCase;
+
+    @Autowired
+    private MatchAcceptedOrderUseCase matchAcceptedOrderUseCase;
 
     @Autowired
     private OrderDao orderDao;
@@ -101,6 +109,7 @@ class OrderPlacementIntegrationTest {
                         quantity("10")
                 )
         );
+        matchAcceptedOrderUseCase.matchAcceptedOrder(response.orderId());
 
         OrderEntity buyOrder = orderDao.findById(response.orderId()).orElseThrow();
         OrderEntity sellOrder = orderDao.findById(sellOrderId).orElseThrow();
@@ -142,7 +151,7 @@ class OrderPlacementIntegrationTest {
                 Instant.parse("2026-01-01T00:01:00Z")
         );
 
-        placeLimitOrderUseCase.placeLimitOrder(
+        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
@@ -151,6 +160,7 @@ class OrderPlacementIntegrationTest {
                         quantity("10")
                 )
         );
+        matchAcceptedOrderUseCase.matchAcceptedOrder(response.orderId());
 
         TradeEntity trade = singleTrade();
         OrderEntity cheapSellOrder = orderDao.findById(cheapSellOrderId).orElseThrow();
@@ -180,7 +190,7 @@ class OrderPlacementIntegrationTest {
                 Instant.parse("2026-01-01T00:01:00Z")
         );
 
-        placeLimitOrderUseCase.placeLimitOrder(
+        PlaceLimitOrderResponse response = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         buyerId,
                         SYMBOL,
@@ -189,6 +199,7 @@ class OrderPlacementIntegrationTest {
                         quantity("10")
                 )
         );
+        matchAcceptedOrderUseCase.matchAcceptedOrder(response.orderId());
 
         TradeEntity trade = singleTrade();
         OrderEntity olderSellOrder = orderDao.findById(olderSellOrderId).orElseThrow();
@@ -214,6 +225,7 @@ class OrderPlacementIntegrationTest {
                         quantity("10")
                 )
         );
+        matchAcceptedOrderUseCase.matchAcceptedOrder(response.orderId());
 
         OrderEntity buyOrder = orderDao.findById(response.orderId()).orElseThrow();
         OrderEntity sellOrder = orderDao.findById(sellOrderId).orElseThrow();
@@ -241,10 +253,11 @@ class OrderPlacementIntegrationTest {
                         quantity("10")
                 )
         );
+        matchAcceptedOrderUseCase.matchAcceptedOrder(sellResponse.orderId());
         UUID firstBuyerId = traderWithCash("10000");
         UUID secondBuyerId = traderWithCash("10000");
 
-        placeLimitOrderUseCase.placeLimitOrder(
+        PlaceLimitOrderResponse firstBuyResponse = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         firstBuyerId,
                         SYMBOL,
@@ -253,6 +266,7 @@ class OrderPlacementIntegrationTest {
                         quantity("4")
                 )
         );
+        matchAcceptedOrderUseCase.matchAcceptedOrder(firstBuyResponse.orderId());
         PlaceLimitOrderResponse secondBuyResponse = placeLimitOrderUseCase.placeLimitOrder(
                 new PlaceLimitOrderRequest(
                         secondBuyerId,
@@ -262,6 +276,7 @@ class OrderPlacementIntegrationTest {
                         quantity("6")
                 )
         );
+        matchAcceptedOrderUseCase.matchAcceptedOrder(secondBuyResponse.orderId());
 
         OrderEntity sellOrder = orderDao.findById(sellResponse.orderId()).orElseThrow();
         OrderEntity secondBuyOrder = orderDao.findById(secondBuyResponse.orderId()).orElseThrow();
@@ -330,5 +345,16 @@ class OrderPlacementIntegrationTest {
 
     private static BigDecimal quantity(String value) {
         return new BigDecimal(value);
+    }
+
+    @TestConfiguration
+    static class KafkaTestConfiguration {
+
+        @Bean
+        @Primary
+        OrderAcceptedEventPublisher orderAcceptedEventPublisher() {
+            return event -> {
+            };
+        }
     }
 }
