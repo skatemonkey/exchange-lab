@@ -36,7 +36,7 @@ Future learning and implementation areas include:
 | ⚪ | Hexagonal architecture |
 | 🟡 | Order matching and settlement correctness |
 | ⚪ | High-concurrency request handling |
-| ⚪ | Kafka for event streaming |
+| 🟡 | Kafka for event streaming |
 | ⚪ | Redis for caching or fast coordination use cases |
 | 🟢 | Spring ecosystem tools such as Spring Cloud Gateway |
 | 🟢 | Spring Cloud Alibaba tools such as Nacos and Sentinel |
@@ -143,3 +143,18 @@ Current phase 5 results include:
    `exchange-gateway`.
 5. Trace requests from gateway to backend.
 6. Use traces to inspect slow requests and service relationships.
+
+### 🟡 Phase 6: Kafka Event Streaming
+
+> Add Kafka as the first event streaming foundation for the trading flow.
+
+Phase 6 starts small. The goal is to learn how the system can publish and
+consume events without splitting the monolith yet.
+
+Planned scope:
+
+1. Add Kafka to the local Docker setup.
+2. Add Spring Kafka to `exchange-app`.
+3. Publish an event when a limit order is accepted.
+4. Add a simple consumer/listener to prove the event flow works.
+5. Use Kafka as the foundation for future order, trade, and audit events.

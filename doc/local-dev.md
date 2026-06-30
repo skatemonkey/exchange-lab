@@ -15,6 +15,7 @@
 | Exchange app | http://localhost:8080 | Backend service |
 | Exchange gateway | http://localhost:9000 | API entry point |
 | Place limit order API | http://localhost:9000/api/orders/limit | Gateway route to the backend order API |
+| Kafka bootstrap server | localhost:9092 | Local Kafka broker |
 | Nacos console | http://localhost:18080 | Service discovery |
 | Sentinel dashboard | http://localhost:8858 | Flow control and API protection |
 | Prometheus | http://localhost:9090 | Metrics collection |
@@ -49,6 +50,18 @@ Start infrastructure first:
 
 ```powershell
 docker compose up -d
+```
+
+Start only Kafka:
+
+```powershell
+docker compose up -d kafka
+```
+
+Check Kafka:
+
+```powershell
+docker exec exchange-lab-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
 ```
 
 Run the backend app:
