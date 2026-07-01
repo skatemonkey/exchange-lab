@@ -16,26 +16,31 @@ executed trade result, and returns a response.
 flowchart LR
     A["1. Receive limit order"] --> B["2. Validate order details"]
     B --> C{"3. Buy or sell?"}
-    C -->|BUY| D["3A-1. Reserve cash"]
-    C -->|SELL| E["3B-1. Reserve stock"]
+    C -->|BUY| D["3A-1. Update reserved_cash"]
+    C -->|SELL| E["3B-1. Update reserved_quantity"]
     D --> F["3A-2. Match against asks"]
     E --> G["3B-2. Match against bids"]
     F --> H{"4. Matched?"}
     G --> H
 
-    H -->|NO| I["4A-1. Save waiting order"]
-    I --> I1["4A-2. orders"]
+    H -->|NO| I["4A. Save waiting order"]
+    I --> I1["orders"]
     I1 --> K["5. Return response"]
 
-    H -->|YES| J["4B-1. Execute trade"]
-    J --> J1["4B-2. trades"]
-    J --> J2["4B-3. orders"]
-    J --> J3["4B-4. trader_accounts"]
-    J --> J4["4B-5. stock_positions"]
-    J1 --> K
-    J2 --> K
-    J3 --> K
-    J4 --> K
+    H -->|YES, incoming BUY| J["4B. Buy matched path"]
+    H -->|YES, incoming SELL| L["4C. Sell matched path"]
+    J --> M["trades"]
+    J --> N["orders"]
+    J --> O["trader_accounts"]
+    J --> P["stock_positions"]
+    L --> M
+    L --> N
+    L --> O
+    L --> P
+    M --> K
+    N --> K
+    O --> K
+    P --> K
 ```
 
 ## 2. Current Flow
@@ -49,25 +54,41 @@ flowchart LR
    quantity.
 3. The system checks whether this is a buy order or sell order.
    - Buy path:
-     - **3A-1.** For Trader A, the system checks and reserves enough cash:
-       `10 * 100 = 1000`.
+     - **3A-1.** For Trader A, the system reserves enough cash.
+       - `trader_accounts.reserved_cash += 1000` (`10 units * 100 price`)
      - **3A-2.** Trader A's buy order is matched against existing asks.
+       - Match rule: `ask.limit_price <= buy.limit_price`
+       - Best ask first: lowest ask price, then oldest order.
    - Sell path:
-     - **3B-1.** For Trader B, the system checks and reserves `10` units of
-       `ACME`.
+     - **3B-1.** For Trader B, the system reserves enough stock.
+       - `stock_positions.reserved_quantity += 10 units`
      - **3B-2.** Trader B's sell order is matched against existing bids.
+       - Match rule: `bid.limit_price >= sell.limit_price`
+       - Best bid first: highest bid price, then oldest order.
 4. The system checks whether the order matched.
    - No-match path:
-     - **4A-1.** If Trader A has no matching ask, or Trader B has no matching
-       bid, the order is saved as a waiting order.
-     - **4A-2.** The waiting order is stored in `orders` with `ACCEPTED`
-       status.
-   - Matched path:
-     - **4B-1.** If Trader A's buy order matches an ask, or Trader B's sell
-       order matches a bid, the system executes a trade.
-     - **4B-2.** The trade is saved in `trades`.
-     - **4B-3.** The order status is saved in `orders` as `FILLED` or
-       `PARTIALLY_FILLED`.
-     - **4B-4.** The buyer and seller cash are updated in `trader_accounts`.
-     - **4B-5.** The buyer and seller stock are updated in `stock_positions`.
+     - **4A.** If Trader A has no matching ask, or Trader B has no matching
+       bid, insert a new waiting order row into `orders`.
+       - `orders.status = ACCEPTED`
+       - `orders.remaining_quantity = orders.quantity`
+   - Buy matched path:
+     - **4B.** Trader A's buy order matches an existing ask.
+       - Trade quantity:
+         `min(buy.remaining_quantity, ask.remaining_quantity)`
+       - `trades`: insert trade row.
+       - `orders`: update remaining quantity and status.
+         - Full match: `remaining_quantity = 0`, `status = FILLED`
+         - Partial match: `remaining_quantity > 0`, `status = PARTIALLY_FILLED`
+       - `trader_accounts`: buyer pays cash, seller receives cash.
+       - `stock_positions`: buyer receives stock, seller delivers stock.
+   - Sell matched path:
+     - **4C.** Trader B's sell order matches an existing bid.
+       - Trade quantity:
+         `min(sell.remaining_quantity, bid.remaining_quantity)`
+       - `trades`: insert trade row.
+       - `orders`: update remaining quantity and status.
+         - Full match: `remaining_quantity = 0`, `status = FILLED`
+         - Partial match: `remaining_quantity > 0`, `status = PARTIALLY_FILLED`
+       - `trader_accounts`: buyer pays cash, seller receives cash.
+       - `stock_positions`: seller delivers stock, buyer receives stock.
 5. The system returns a response.

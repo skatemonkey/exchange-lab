@@ -25,6 +25,14 @@ observability, and performance tuning.
   - Allows users to submit buy or sell limit orders: [Order Flow](03-order-flow.md).
 - Current tables:
   - `trader_accounts`: trader cash balance and reserved cash.
+    - Columns: `trader_id`, `cash_balance`, `reserved_cash`
   - `stock_positions`: trader stock quantity and reserved stock.
+    - Columns: `position_id`, `trader_id`, `symbol`, `quantity`,
+      `reserved_quantity`
   - `orders`: buy/sell limit orders and order status.
+    - Columns: `order_id`, `trader_id`, `symbol`, `side`, `limit_price`,
+      `quantity`, `remaining_quantity`, `status`, `created_at`
   - `trades`: executed trade records.
+    - Columns: `trade_id`, `buy_order_id`, `sell_order_id`,
+      `buyer_trader_id`, `seller_trader_id`, `symbol`, `price`, `quantity`,
+      `created_at`
