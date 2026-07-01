@@ -15,21 +15,6 @@ public record PlaceLimitOrderResponse(
         Order.Status status
 ) {
 
-    public static PlaceLimitOrderResponse accepted(
-            UUID orderId,
-            PlaceLimitOrderRequest request
-    ) {
-        return new PlaceLimitOrderResponse(
-                orderId,
-                request.traderId(),
-                request.symbol(),
-                request.side(),
-                request.limitPrice(),
-                request.quantity(),
-                Order.Status.ACCEPTED
-        );
-    }
-
     public static PlaceLimitOrderResponse from(Order order) {
         return new PlaceLimitOrderResponse(
                 order.getOrderId(),
