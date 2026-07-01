@@ -1,4 +1,4 @@
-# Exchange Lab
+# Roadmap
 
 > **Table of Contents**
 >
@@ -8,20 +8,7 @@
 
 ## 1. Overview
 
-Exchange Lab is a backend engineering practice project for building a stock
-trading platform from the ground up.
-
-The goal is to build a robust backend that can eventually handle serious
-concurrency, from thousands of requests per second toward much larger traffic
-loads. The project starts small, but the direction is intentionally ambitious:
-learn how a trading backend can grow from a familiar Spring Boot application
-into a system that uses stronger domain modeling, distributed systems patterns,
-streaming, caching, observability, and performance tuning.
-
-The first business capability is intentionally narrow: support limit buy orders
-and limit sell orders. A user should be able to submit a limit order, the system
-should decide whether it can be accepted, and later the platform should match
-compatible buy and sell orders into trades.
+This file tracks where the project is going next.
 
 ## 2. Long-Term Direction
 
@@ -32,7 +19,7 @@ Future learning and implementation areas include:
 
 | Status | Area |
 |---|---|
-| ⚪ | Domain-driven design |
+| 🟡 | Domain-driven design |
 | ⚪ | Hexagonal architecture |
 | ⚪ | Order matching and settlement correctness |
 | ⚪ | High-concurrency request handling |
@@ -76,3 +63,14 @@ Status: completed at commit `505bb9a`.
   implementations.
 
 Status: completed for now at commit `4ad67a7`.
+
+### 🟡 Phase 3: Order Flow and Domain Model Review
+
+> Re-understand the single buy/sell limit order API flow and decide which domain
+> objects are actually needed.
+
+- Trace the current flow from controller to database.
+- Clarify the real domain objects, such as order, order book, trade, portfolio,
+  account, and position.
+
+Status: in progress.
