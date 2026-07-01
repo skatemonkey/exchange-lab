@@ -32,16 +32,21 @@ Future learning and implementation areas include:
 
 | Status | Area |
 |---|---|
-| 🟢 | Domain-driven design |
+| ⚪ | Domain-driven design |
 | ⚪ | Hexagonal architecture |
-| 🟡 | Order matching and settlement correctness |
+| ⚪ | Order matching and settlement correctness |
 | ⚪ | High-concurrency request handling |
 | ⚪ | Kafka for event streaming |
 | ⚪ | Redis for caching or fast coordination use cases |
-| 🟡 | Spring ecosystem tools such as Spring Cloud Gateway |
-| 🟡 | Spring Cloud Alibaba tools such as Nacos and Sentinel |
+| ⚪ | Spring ecosystem tools such as Spring Cloud Gateway |
+| ⚪ | Spring Cloud Alibaba tools such as Nacos and Sentinel |
 | ⚪ | Infrastructure tools such as Nginx |
-| ⚪ | Observability, metrics, tracing, and dashboards |
+| ⚪ | Prometheus and Grafana for metrics and dashboards |
+| ⚪ | Loki and Alloy for log collection and search |
+| ⚪ | Apache SkyWalking for distributed tracing and observability |
+| ⚪ | Seata for distributed transaction learning |
+| ⚪ | Spring Batch for batch processing |
+| ⚪ | ElasticJob for distributed job scheduling |
 | ⚪ | Load testing and performance profiling |
 | ⚪ | JVM optimization |
 
@@ -51,30 +56,16 @@ real problem in the trading platform.
 
 ## 3. Development Roadmap
 
-### Phase 1: Controller-Service-Repository Baseline
+### 🟢 Phase 1: Controller-Service-Repository Baseline
 
 > Build the first limit order API using the familiar Spring Boot
 > controller-service-repository structure.
 
-Phase 1 covers one vertical slice: accept limit buy and limit sell requests,
-validate the basic input, store the order, and return a clear response.
-
 Status: completed at commit `505bb9a`.
 
-The simple baseline model is now in place: controller, service, repository,
-entities, Postgres Docker setup, and Flyway schema migration. The next phase is
-to rewrite and grow this code in a domain-driven design style.
-
-### Phase 2: First Domain-Driven Design Pass
+### 🟢 Phase 2: First Domain-Driven Design Pass
 
 > Reorganize the first limit order flow into a clearer DDD-style structure.
-
-Status: completed for now at commit `4ad67a7`.
-
-Phase 2 converts the phase 1 controller-service-repository baseline into a first
-DDD-oriented version. This is a learning checkpoint, not a final architecture.
-
-Current phase 2 results include:
 
 - `presentation`: controller and API DTOs.
 - `application`: order placement use case and application-level loading/saving
@@ -84,16 +75,4 @@ Current phase 2 results include:
 - `infrastructure`: JPA entities, DAOs, custom queries, and repository
   implementations.
 
-### Phase 3: Spring Cloud Alibaba Infrastructure Foundation
-
-> Add common Spring Cloud Alibaba infrastructure around the monolith first.
-
-Phase 3 keeps the project as a monolith, but starts introducing infrastructure
-patterns that are useful before splitting into multiple services.
-
-1. Nacos for externalized configuration first, and service discovery later.
-2. Sentinel for API flow control, rate limiting, and protection rules.
-3. Spring Cloud Gateway as a separate entry point that can route to the monolith
-  first.
-4. Keep the domain and application code stable unless an infrastructure boundary
-  needs a small adapter.
+Status: completed for now at commit `4ad67a7`.
