@@ -47,7 +47,7 @@ Future learning and implementation areas include:
 | ⚪ | Seata for distributed transaction learning |
 | ⚪ | Spring Batch for batch processing |
 | ⚪ | ElasticJob for distributed job scheduling |
-| ⚪ | Load testing and performance profiling |
+| 🟡 | Load testing and performance profiling |
 | ⚪ | JVM optimization |
 
 The important idea is progression: begin with controller-service-repository,
@@ -166,3 +166,29 @@ Next Kafka hardening item:
 
 - Add idempotency for consumed events, so duplicate `OrderAcceptedEvent`
   messages cannot trigger duplicate matching or duplicate trades.
+
+### 🟡 Phase 7: Load Testing And Performance Baseline
+
+> Prove the current system behavior under traffic before adding more
+> performance tools.
+
+Phase 7 connects the project back to the main goal: high-concurrency backend
+engineering. Before adding Redis, extra services, or deeper optimization, the
+system needs a measurable baseline.
+
+Planned phase 7 scope:
+
+1. Add local load testing scripts, likely with k6.
+2. Seed enough traders, balances, positions, and orders for repeatable tests.
+3. Send traffic through `exchange-gateway` into the order API.
+4. Measure request rate, latency, error rate, database pressure, Kafka consumer
+   behavior, and service traces.
+5. Use Prometheus, Grafana, and SkyWalking to observe the bottlenecks.
+6. Record baseline results before deciding whether Redis, database tuning,
+   Kafka tuning, or JVM tuning should come next.
+
+Current phase 7 setup includes:
+
+1. Seed SQL for repeatable local load test data.
+2. Local k6 script for sending limit buy orders through `exchange-gateway`.
+3. Verification SQL for checking cash, stock, orders, and trades after a run.

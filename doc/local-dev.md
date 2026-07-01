@@ -8,6 +8,7 @@
 > - [4. Observability Folder](#4-observability-folder)
 > - [5. SkyWalking Tracing](#5-skywalking-tracing)
 > - [6. Kafka Event Flow](#6-kafka-event-flow)
+> - [7. Load Testing](#7-load-testing)
 
 ## 1. URLs
 
@@ -154,3 +155,61 @@ OrderController
 -> MatchAcceptedOrderUseCase
 -> match, settle, and save trades
 ```
+
+## 7. Load Testing
+
+The `load-testing/` folder stores local performance testing files.
+
+It currently contains:
+
+1. `load-testing/seed/phase7-seed.sql`: resets and seeds traders, stock
+   positions, and resting sell orders.
+2. `load-testing/k6/place-limit-orders.js`: sends limit buy orders through
+   `exchange-gateway`.
+
+Detailed load test overview:
+
+```text
+load-testing/README.md
+```
+
+Seed the database:
+
+```powershell
+Get-Content .\load-testing\seed\phase7-seed.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+```
+
+Run the default k6 test:
+
+```powershell
+$env:BASE_URL = "http://localhost:9000"
+k6 run .\load-testing\k6\place-limit-orders.js
+```
+
+Verify the database after k6:
+
+```powershell
+Get-Content .\load-testing\verify\phase7-verify.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+```
+
+Run a higher-rate test:
+
+```powershell
+$env:BASE_URL = "http://localhost:9000"
+$env:TARGET_RATE = "200"
+$env:DURATION = "2m"
+$env:MAX_VUS = "500"
+k6 run .\load-testing\k6\place-limit-orders.js
+```
+
+Useful k6 environment variables:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `BASE_URL` | `http://localhost:9000` | Gateway URL |
+| `TARGET_RATE` | `50` | Target requests per second |
+| `DURATION` | `1m` | Main test duration |
+| `BUYER_COUNT` | `1000` | Number of seeded buyer accounts |
+| `MAX_VUS` | `200` | Maximum virtual users |
+| `P95_MS` | `2000` | p95 latency threshold |
+| `MAX_ERROR_RATE` | `0.20` | Maximum allowed request failure rate |
