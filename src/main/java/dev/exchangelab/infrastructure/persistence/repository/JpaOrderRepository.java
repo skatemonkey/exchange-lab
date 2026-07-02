@@ -1,7 +1,6 @@
 package dev.exchangelab.infrastructure.persistence.repository;
 
 import dev.exchangelab.domain.model.Order;
-import dev.exchangelab.domain.model.OrderBook;
 import dev.exchangelab.domain.repository.OrderRepository;
 import dev.exchangelab.infrastructure.persistence.dao.OrderDao;
 import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
@@ -18,8 +17,8 @@ public class JpaOrderRepository implements OrderRepository {
     private final OrderDao orderDao;
 
     @Override
-    public OrderBook findOrderBookFor(Order incomingOrder) {
-        List<Order> restingOrders = switch (incomingOrder.getSide()) {
+    public List<Order> findMatchingOrdersFor(Order incomingOrder) {
+        return switch (incomingOrder.getSide()) {
             case BUY -> findMatchableSellOrders(
                     incomingOrder.getSymbol(),
                     incomingOrder.getLimitPrice()
@@ -29,8 +28,6 @@ public class JpaOrderRepository implements OrderRepository {
                     incomingOrder.getLimitPrice()
             );
         };
-
-        return new OrderBook(restingOrders);
     }
 
     private List<Order> findMatchableBuyOrders(String symbol, BigDecimal sellLimitPrice) {

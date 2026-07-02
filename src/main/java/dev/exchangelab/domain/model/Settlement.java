@@ -26,12 +26,16 @@ public class Settlement {
         }
     }
 
-    public void settle(MatchResult matchResult) {
+    public void settle(
+            Order incomingOrder,
+            List<Order> updatedMatchingOrders,
+            List<Trade> executedTrades
+    ) {
         Map<UUID, Order> ordersById = new HashMap<>();
-        ordersById.put(matchResult.incomingOrder().getOrderId(), matchResult.incomingOrder());
-        matchResult.updatedMatchingOrders().forEach(order -> ordersById.put(order.getOrderId(), order));
+        ordersById.put(incomingOrder.getOrderId(), incomingOrder);
+        updatedMatchingOrders.forEach(order -> ordersById.put(order.getOrderId(), order));
 
-        for (Trade trade : matchResult.executedTrades()) {
+        for (Trade trade : executedTrades) {
             Order buyOrder = ordersById.get(trade.getBuyOrderId());
 
             settleCash(trade, buyOrder);
