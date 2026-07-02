@@ -4,6 +4,7 @@
 >
 > - [1. Overview](#1-overview)
 > - [2. Current Flow](#2-current-flow)
+> - [3. Code Flow](#3-code-flow)
 
 ## 1. Overview
 
@@ -12,27 +13,65 @@ the system receives the order, checks whether the trader has enough cash or
 stock, tries to match the order with existing orders, saves the waiting order or
 executed trade result, and returns a response.
 
+Flow stages:
+
+1. Receive order.
+2. Reserve asset.
+3. Match order.
+4. Apply result.
+5. Return response.
+
 ```mermaid
 flowchart LR
-    A["1. Receive limit order"] --> B["2. Validate order details"]
-    B --> C{"3. Buy or sell?"}
-    C -->|BUY| D["3A-1. Update reserved_cash"]
-    C -->|SELL| E["3B-1. Update reserved_quantity"]
-    D --> F["3A-2. Match against asks"]
-    E --> G["3B-2. Match against bids"]
-    F --> H{"4. Matched?"}
+    subgraph S1["1. Receive Order"]
+        A["Receive limit order"]
+        B["Validate order details"]
+    end
+
+    subgraph S2["2. Reserve Asset"]
+        C{"Buy or sell?"}
+        D["BUY: update reserved_cash"]
+        E["SELL: update reserved_quantity"]
+    end
+
+    subgraph S3["3. Match Order"]
+        F["BUY: match against asks"]
+        G["SELL: match against bids"]
+        H{"Matched?"}
+    end
+
+    subgraph S4["4. Apply Result"]
+        I["No match: save waiting order"]
+        I1["orders"]
+        J["Buy matched path"]
+        L["Sell matched path"]
+        M["trades"]
+        N["orders"]
+        O["trader_accounts"]
+        P["stock_positions"]
+    end
+
+    subgraph S5["5. Return Response"]
+        K["Return response"]
+    end
+
+    A --> B
+    B --> C
+    C -->|BUY| D
+    C -->|SELL| E
+    D --> F
+    E --> G
+    F --> H
     G --> H
-
-    H -->|NO| I["4A. Save waiting order"]
-    I --> I1["orders"]
-    I1 --> K["5. Return response"]
-
-    H -->|YES, incoming BUY| J["4B. Buy matched path"]
-    H -->|YES, incoming SELL| L["4C. Sell matched path"]
-    J --> M["trades"]
-    J --> N["orders"]
-    J --> O["trader_accounts"]
-    J --> P["stock_positions"]
+    H -->|NO| I
+    I --> I1
+    I1 --> K
+    H -->|YES, incoming BUY| J
+    H -->|YES, incoming SELL| L
+    J --> M
+    J --> N
+    J --> O
+    J --> P
     L --> M
     L --> N
     L --> O
@@ -92,3 +131,13 @@ flowchart LR
        - `trader_accounts`: buyer pays cash, seller receives cash.
        - `stock_positions`: seller delivers stock, buyer receives stock.
 5. The system returns a response.
+
+## 3. Code Flow
+
+This section maps the business flow above to the actual code.
+
+1. Request enters the controller.
+   - Example request: buy `10` units of `ACME` at `100`.
+   - Code: `OrderController.placeLimitOrder(...)`
+2. Controller passes the request to the application use case.
+   - Code: `PlaceLimitOrderUseCase.placeLimitOrder(...)`
