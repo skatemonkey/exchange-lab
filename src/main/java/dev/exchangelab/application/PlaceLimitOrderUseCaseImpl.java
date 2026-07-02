@@ -1,7 +1,6 @@
 package dev.exchangelab.application;
 
 import dev.exchangelab.domain.model.Order;
-import dev.exchangelab.domain.model.Settlement;
 import dev.exchangelab.domain.model.StockPosition;
 import dev.exchangelab.domain.model.Trade;
 import dev.exchangelab.domain.model.TraderAccount;
@@ -92,43 +91,65 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
         // Stage 4: Apply result
         Map<UUID, TraderAccount> accountsByTraderId = new HashMap<>();
         Map<StockPosition.Key, StockPosition> positionsByKey = new HashMap<>();
+        Map<UUID, Order> ordersById = new HashMap<>();
+        ordersById.put(incomingOrder.getOrderId(), incomingOrder);
+        updatedMatchingOrders.forEach(order -> ordersById.put(order.getOrderId(), order));
 
         for (Trade trade : executedTrades) {
-            accountsByTraderId.putIfAbsent(
+            TraderAccount buyerAccount = accountsByTraderId.computeIfAbsent(
                     trade.getBuyerTraderId(),
-                    traderAccountRepository.findForCashReservation(trade.getBuyerTraderId())
+                    traderId -> traderAccountRepository.findForCashReservation(traderId)
                             .orElseThrow(() -> new IllegalStateException("Buyer account not found"))
             );
-            accountsByTraderId.putIfAbsent(
+            TraderAccount sellerAccount = accountsByTraderId.computeIfAbsent(
                     trade.getSellerTraderId(),
-                    traderAccountRepository.findForCashReservation(trade.getSellerTraderId())
+                    traderId -> traderAccountRepository.findForCashReservation(traderId)
                             .orElseThrow(() -> new IllegalStateException("Seller account not found"))
             );
 
-            StockPosition sellerPosition = stockPositionRepository
-                    .findForStockReservation(trade.getSellerTraderId(), trade.getSymbol())
-                    .orElseThrow(() -> new IllegalStateException("Seller stock position not found"));
-            positionsByKey.putIfAbsent(sellerPosition.key(), sellerPosition);
+            StockPosition.Key sellerPositionKey = new StockPosition.Key(
+                    trade.getSellerTraderId(),
+                    trade.getSymbol()
+            );
+            StockPosition sellerPosition = positionsByKey.computeIfAbsent(
+                    sellerPositionKey,
+                    key -> stockPositionRepository.findForStockReservation(key.traderId(), key.symbol())
+                            .orElseThrow(() -> new IllegalStateException("Seller stock position not found"))
+            );
 
-            StockPosition buyerPosition = stockPositionRepository
-                    .findForStockReservation(trade.getBuyerTraderId(), trade.getSymbol())
-                    .orElseGet(() -> new StockPosition(
-                            UUID.randomUUID(),
-                            trade.getBuyerTraderId(),
-                            trade.getSymbol(),
-                            BigDecimal.ZERO,
-                            BigDecimal.ZERO
-                    ));
-            positionsByKey.putIfAbsent(buyerPosition.key(), buyerPosition);
+            StockPosition.Key buyerPositionKey = new StockPosition.Key(
+                    trade.getBuyerTraderId(),
+                    trade.getSymbol()
+            );
+            StockPosition buyerPosition = positionsByKey.computeIfAbsent(
+                    buyerPositionKey,
+                    key -> stockPositionRepository.findForStockReservation(key.traderId(), key.symbol())
+                            .orElseGet(() -> new StockPosition(
+                                    UUID.randomUUID(),
+                                    key.traderId(),
+                                    key.symbol(),
+                                    BigDecimal.ZERO,
+                                    BigDecimal.ZERO
+                            ))
+            );
+
+            Order buyOrder = ordersById.get(trade.getBuyOrderId());
+            if (buyOrder == null) {
+                throw new IllegalStateException("Buy order not found");
+            }
+
+            BigDecimal tradeValue = trade.getPrice().multiply(trade.getQuantity());
+            BigDecimal reservedCashToRelease = buyOrder.getLimitPrice().multiply(trade.getQuantity());
+
+            buyerAccount.settleBuy(tradeValue, reservedCashToRelease);
+            sellerAccount.receiveCash(tradeValue);
+
+            sellerPosition.settleSell(trade.getQuantity());
+            buyerPosition.receive(trade.getQuantity());
         }
 
-        Settlement settlement = new Settlement(
-                new ArrayList<>(accountsByTraderId.values()),
-                new ArrayList<>(positionsByKey.values())
-        );
-        settlement.settle(incomingOrder, updatedMatchingOrders, executedTrades);
-        settlement.accountsToSave().forEach(traderAccountRepository::save);
-        settlement.positionsToSave().forEach(stockPositionRepository::save);
+        accountsByTraderId.values().forEach(traderAccountRepository::save);
+        positionsByKey.values().forEach(stockPositionRepository::save);
 
         List<Order> ordersToSave = new ArrayList<>();
         ordersToSave.add(incomingOrder);

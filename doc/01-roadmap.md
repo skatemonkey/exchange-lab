@@ -64,13 +64,20 @@ Status: completed at commit `505bb9a`.
 
 Status: completed for now at commit `4ad67a7`.
 
-### 🟡 Phase 3: Order Flow and Domain Model Review
+### 🟢 Phase 3: Order Flow and Simple Domain Model Review
 
-> Re-understand the single buy/sell limit order API flow and decide which domain
-> objects are actually needed.
+> Re-understand the full buy/sell limit order flow and simplify the code so the
+> use case is easier to follow.
 
-- Trace the current flow from controller to database.
-- Clarify the real domain objects, such as order, order book, trade, portfolio,
-  account, and position.
+- Documented the order flow as five stages: receive and validate order, check
+  and reserve asset, match against order book, save result, and return response.
+- Reworked the use case so the five stages are visible directly in the code.
+- Kept a simple DDD style with domain objects such as `Order`, `Trade`,
+  `TraderAccount`, and `StockPosition`.
+- Removed confusing wrapper objects while learning, such as `Portfolio`,
+  `OrderBook`, and `MatchResult`.
+- Current limitation: the use case still contains a lot of workflow/business
+  logic. This is acceptable for now while the domain model is still being
+  understood.
 
-Status: in progress.
+Status: completed for now at commit `02caa20`.
