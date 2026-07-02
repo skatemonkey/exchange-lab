@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -83,7 +82,7 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
                     matchingOrder.getRemainingQuantity()
             );
 
-            executedTrades.add(createTrade(incomingOrder, matchingOrder, tradeQuantity));
+            executedTrades.add(Trade.create(incomingOrder, matchingOrder, tradeQuantity));
             updatedMatchingOrders.add(matchingOrder);
 
             incomingOrder.fill(tradeQuantity);
@@ -140,26 +139,5 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
 
         // Stage 5: Return response
         return PlaceLimitOrderResponse.from(incomingOrder);
-    }
-
-    private Trade createTrade(
-            Order incomingOrder,
-            Order matchingOrder,
-            BigDecimal tradeQuantity
-    ) {
-        Order buyOrder = incomingOrder.getSide() == Order.Side.BUY ? incomingOrder : matchingOrder;
-        Order sellOrder = incomingOrder.getSide() == Order.Side.SELL ? incomingOrder : matchingOrder;
-
-        return new Trade(
-                UUID.randomUUID(),
-                buyOrder.getOrderId(),
-                sellOrder.getOrderId(),
-                buyOrder.getTraderId(),
-                sellOrder.getTraderId(),
-                incomingOrder.getSymbol(),
-                matchingOrder.getLimitPrice(),
-                tradeQuantity,
-                Instant.now()
-        );
     }
 }
