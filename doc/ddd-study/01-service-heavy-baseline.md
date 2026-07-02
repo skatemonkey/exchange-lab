@@ -287,14 +287,14 @@ public class PayServiceImpl extends PayService {
         }
 
         // transfer business (转账业务)
-        accountTransferService.transfer(client, merchant, money);
+        accountTransferService.transfer(clientAccount, merAccount, money);
 
         // save data (保存数据)
-        accountRepository.save(client);
-        accountRepository.save(merchant);
+        accountRepository.save(clientAccount);
+        accountRepository.save(merAccount);
 
         // send audit message (发送审计消息)
-        AuditMessage message = new AuditMessage(client, merchant, money);
+        AuditMessage message = new AuditMessage(clientAccount, merAccount, money);
         auditMessageProducer.send(message);
 
         return Result.SUCCESS;

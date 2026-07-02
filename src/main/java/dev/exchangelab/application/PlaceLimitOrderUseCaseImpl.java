@@ -25,8 +25,6 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
     @Override
     @Transactional
     public PlaceLimitOrderResponse placeLimitOrder(PlaceLimitOrderRequest request) {
-        requireRequest(request);
-
         Order incomingOrder = Order.createLimit(
                 request.traderId(),
                 request.symbol(),
@@ -49,11 +47,5 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
         tradeRepository.saveAll(matchResult.executedTrades());
 
         return PlaceLimitOrderResponse.from(matchResult.incomingOrder());
-    }
-
-    private void requireRequest(PlaceLimitOrderRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Order request is required");
-        }
     }
 }
