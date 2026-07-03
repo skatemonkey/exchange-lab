@@ -59,7 +59,7 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 Run k6:
 
 ```powershell
-k6 run .\load-test\limit-orders.js
+k6 run .\load-test\k6\01-buy-orders.js
 ```
 
 Verify DB totals:
