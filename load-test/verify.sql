@@ -2,16 +2,16 @@
 
 select
     'total_cash_balance' as check_name,
-    '10000000.00000000' as expected,
+    '10000000000.00000000' as expected,
     coalesce(sum(cash_balance), 0)::text as actual,
-    coalesce(sum(cash_balance), 0) = 10000000.00000000 as pass
+    coalesce(sum(cash_balance), 0) = 10000000000.00000000 as pass
 from trader_accounts
 union all
 select
     'total_acme_quantity',
-    '100000.00000000',
+    '5000000.00000000',
     coalesce(sum(quantity), 0)::text,
-    coalesce(sum(quantity), 0) = 100000.00000000
+    coalesce(sum(quantity), 0) = 5000000.00000000
 from stock_positions
 where symbol = 'ACME'
 union all

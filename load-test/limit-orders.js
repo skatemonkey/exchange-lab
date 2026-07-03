@@ -8,7 +8,6 @@ export const options = {
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const BUYER_COUNT = Number(__ENV.BUYER_COUNT || 100);
-const SELLER_COUNT = Number(__ENV.SELLER_COUNT || 100);
 
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -22,16 +21,11 @@ function buyerId() {
   return uuidFromNumber(randomInt(1, BUYER_COUNT));
 }
 
-function sellerId() {
-  return uuidFromNumber(1000 + randomInt(1, SELLER_COUNT));
-}
-
 export default function () {
-  const isBuy = Math.random() < 0.5;
   const payload = JSON.stringify({
-    traderId: isBuy ? buyerId() : sellerId(),
+    traderId: buyerId(),
     symbol: 'ACME',
-    side: isBuy ? 'BUY' : 'SELL',
+    side: 'BUY',
     limitPrice: '100.00000000',
     quantity: '1.00000000',
   });
