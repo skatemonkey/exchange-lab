@@ -119,24 +119,19 @@ for each created trade:
 
 ## 5. Known Problems
 
-1. Current Stage 2 saves too early.
-   - The current code reserves cash/stock and writes it immediately.
-   - If the order matches, the same account or stock position may be loaded and
-     saved again during settlement.
-   - Cleaner direction: reserve through Redis first, then write final state to
-     DB after matching and settlement.
-2. Matching creates trade results before recording them.
-   - This is acceptable, but `Record order/trade result` should mean saving the
-     result, not creating it from scratch.
-3. Matching currently loads all matchable opposite orders.
-   - This works for learning.
-   - Later, it can be wasteful if many orders match but only a few are needed.
-   - Target direction: match from Redis order book instead of querying DB every
-     time.
-4. Concurrency is not solved yet.
-   - Two requests can still try to match the same resting order at the same time.
-   - This is the biggest real correctness problem for high concurrency.
-5. The whole API is synchronous.
-   - This is fine for the current learning phase.
-   - The target flow moves matching work behind Kafka so the API only validates,
-     pre-reserves, queues, and returns.
+1. Redis reserve must be atomic.
+   - Do not `GET` in Redis, calculate in Java, then `SET` back.
+   - Use Lua script or another atomic Redis operation to check and deduct in one
+     step.
+2. Kafka publish failure needs rollback.
+   - If Redis reserve succeeds but Kafka publish fails, Redis must restore the
+     reserved cash/stock.
+3. Kafka consumer must be idempotent.
+   - Duplicate order events must not create duplicate matches or duplicate DB
+     updates.
+   - Use a key like `processed:order:{orderId}`.
+4. Redis order book structure is not finalized.
+   - Need to decide exact keys for bid/ask sorted sets and full order data.
+5. Matching ownership is not finalized.
+   - Long term direction is one matching worker owns one symbol or one symbol
+     partition to avoid two workers matching the same order.
