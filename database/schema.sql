@@ -1,4 +1,4 @@
-create table trader_accounts (
+create table if not exists trader_accounts (
     trader_id uuid primary key,
     cash_balance numeric(19, 8) not null,
     reserved_cash numeric(19, 8) not null,
@@ -7,7 +7,7 @@ create table trader_accounts (
     constraint trader_accounts_reserved_cash_not_above_balance check (reserved_cash <= cash_balance)
 );
 
-create table stock_positions (
+create table if not exists stock_positions (
     position_id uuid primary key,
     trader_id uuid not null references trader_accounts (trader_id),
     symbol varchar(20) not null,
@@ -19,7 +19,7 @@ create table stock_positions (
     constraint stock_positions_reserved_quantity_not_above_quantity check (reserved_quantity <= quantity)
 );
 
-create table orders (
+create table if not exists orders (
     order_id uuid primary key,
     trader_id uuid not null references trader_accounts (trader_id),
     symbol varchar(20) not null,
@@ -37,13 +37,13 @@ create table orders (
     constraint orders_remaining_quantity_not_above_quantity check (remaining_quantity <= quantity)
 );
 
-create index idx_orders_buy_match
+create index if not exists idx_orders_buy_match
     on orders (symbol, status, side, limit_price desc, created_at asc);
 
-create index idx_orders_sell_match
+create index if not exists idx_orders_sell_match
     on orders (symbol, status, side, limit_price asc, created_at asc);
 
-create table trades (
+create table if not exists trades (
     trade_id uuid primary key,
     buy_order_id uuid not null references orders (order_id),
     sell_order_id uuid not null references orders (order_id),
@@ -57,5 +57,5 @@ create table trades (
     constraint trades_quantity_positive check (quantity > 0)
 );
 
-create index idx_trades_symbol_created_at
+create index if not exists idx_trades_symbol_created_at
     on trades (symbol, created_at desc);

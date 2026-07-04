@@ -36,34 +36,46 @@ Test scenario:
 
 ## 3. Commands
 
-Start Postgres:
+1. Start Postgres.
 
-```powershell
-docker compose up -d postgres
-```
+   ```powershell
+   docker compose up -d postgres
+   ```
 
-Seed baseline data:
+2. Create tables.
 
-```powershell
-Get-Content .\load-test\seed.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
-```
+   ```powershell
+   Get-Content .\database\schema.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+   ```
 
-Start the app:
+   Or run [schema.sql](../database/schema.sql) manually in a DataGrip SQL console.
 
-```powershell
-$env:JAVA_HOME = "$env:USERPROFILE\.jdks\openjdk-26.0.1"
-$env:Path = "$env:JAVA_HOME\bin;$env:Path"
-.\gradlew.bat bootRun
-```
+3. Seed baseline data.
 
-Run k6:
+   ```powershell
+   Get-Content .\load-test\seed.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+   ```
 
-```powershell
-k6 run .\load-test\k6\01-buy-orders.js
-```
+   Or run [seed.sql](seed.sql) manually in a DataGrip SQL console.
 
-Verify DB totals:
+4. Start the app.
 
-```powershell
-Get-Content .\load-test\verify.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
-```
+   ```powershell
+   $env:JAVA_HOME = "$env:USERPROFILE\.jdks\openjdk-26.0.1"
+   $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+   .\gradlew.bat bootRun
+   ```
+
+5. Run k6 in another terminal.
+
+   ```powershell
+   k6 run .\load-test\k6\01-buy-orders.js
+   ```
+
+6. Verify DB totals.
+
+   ```powershell
+   Get-Content .\load-test\verify.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+   ```
+
+   Or run [verify.sql](verify.sql) manually in a DataGrip SQL console.
