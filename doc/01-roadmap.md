@@ -19,7 +19,7 @@ Future learning and implementation areas include:
 
 | Status | Area |
 |---|---|
-| 🟡 | Domain-driven design |
+| 🟢 | Domain-driven design |
 | ⚪ | Hexagonal architecture |
 | ⚪ | Order matching and settlement correctness |
 | ⚪ | High-concurrency request handling |
@@ -34,7 +34,7 @@ Future learning and implementation areas include:
 | ⚪ | Seata for distributed transaction learning |
 | ⚪ | Spring Batch for batch processing |
 | ⚪ | ElasticJob for distributed job scheduling |
-| ⚪ | Load testing and performance profiling |
+| 🟢 | Load testing and performance profiling |
 | ⚪ | JVM optimization |
 
 The important idea is progression: begin with controller-service-repository,
@@ -42,6 +42,12 @@ understand the pain points, then introduce each advanced concept when it solves 
 real problem in the trading platform.
 
 ## 3. Development Roadmap
+
+Status:
+
+- 🟢 completed
+- 🟡 in progress or revisiting
+- ⚪ not started
 
 ### 🟢 Phase 1: Controller-Service-Repository Baseline
 
@@ -81,3 +87,25 @@ Status: completed for now at commit `4ad67a7`.
   understood.
 
 Status: completed for now at commit `02caa20`.
+
+### 🟢 Phase 4: Baseline Load Testing
+
+> Add a repeatable k6 load test and verify whether the current synchronous DB
+> flow keeps cash and stock totals correct.
+
+- Added seed data, k6 script, and verification SQL.
+- Ran baseline test and found the concurrency bug:
+  [result](../load-test/results/01-sync-db-buy-orders.md).
+
+Status: completed for now at commit `e38d72a`.
+
+### ⚪ Phase 5: Kafka-Based Order Processing
+
+> Move order matching behind Kafka so matching can be processed sequentially per
+> symbol before adding Redis reservation.
+
+- API publishes order events.
+- Kafka consumer performs matching.
+- Rerun the same k6 verification.
+
+Status: not started.
