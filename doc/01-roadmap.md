@@ -108,4 +108,11 @@ Status: completed for now at commit `e38d72a`.
 - Kafka consumer performs matching.
 - Rerun the same k6 verification.
 
-Status: not started.
+Sub-phases:
+
+- 5.1 Add Kafka infrastructure: docker-compose, Spring dependency, application config, and one order topic. Done.
+- 5.2 Publish order event: HTTP request publishes an order event and returns `202`.
+- 5.3 Consume order event: Kafka consumer calls the processing use case for matching and settlement.
+- 5.4 Verify result: rerun the same seed, k6 script, and verification SQL.
+
+Status: in progress.
