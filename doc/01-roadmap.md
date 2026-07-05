@@ -22,6 +22,7 @@ Future learning and implementation areas include:
 | 🟢 | Domain-driven design |
 | ⚪ | Hexagonal architecture |
 | ⚪ | Order matching and settlement correctness |
+| ⚪ | In-memory order book using `TreeMap` or `ConcurrentSkipListMap` for active orders |
 | ⚪ | High-concurrency request handling |
 | ⚪ | Kafka for event streaming |
 | ⚪ | Redis for caching or fast coordination use cases |
