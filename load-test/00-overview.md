@@ -34,6 +34,8 @@ Test scenario:
 - No stock position has reserved quantity greater than quantity.
 - No order has invalid remaining quantity or status.
 
+Previous run results are tracked in [Load Test Results](results/00-results.md).
+
 ## 3. Commands
 
 1. Start Postgres.
