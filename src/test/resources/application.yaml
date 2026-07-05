@@ -5,3 +5,5 @@ spring:
   kafka:
     admin:
       fail-fast: false
+    listener:
+      auto-startup: false

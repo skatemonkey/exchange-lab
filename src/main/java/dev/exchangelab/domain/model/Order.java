@@ -39,6 +39,29 @@ public class Order {
             BigDecimal limitPrice,
             BigDecimal quantity
     ) {
+        return createLimit(
+                UUID.randomUUID(),
+                traderId,
+                symbol,
+                side,
+                limitPrice,
+                quantity,
+                Instant.now()
+        );
+    }
+
+    public static Order createLimit(
+            UUID orderId,
+            UUID traderId,
+            String symbol,
+            Side side,
+            BigDecimal limitPrice,
+            BigDecimal quantity,
+            Instant createdAt
+    ) {
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order id is required");
+        }
         if (traderId == null) {
             throw new IllegalArgumentException("Trader id is required");
         }
@@ -54,9 +77,12 @@ public class Order {
         if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
+        if (createdAt == null) {
+            throw new IllegalArgumentException("Created at is required");
+        }
 
         return new Order(
-                UUID.randomUUID(),
+                orderId,
                 traderId,
                 symbol,
                 side,
@@ -64,7 +90,7 @@ public class Order {
                 quantity,
                 quantity,
                 Status.ACCEPTED,
-                Instant.now()
+                createdAt
         );
     }
 

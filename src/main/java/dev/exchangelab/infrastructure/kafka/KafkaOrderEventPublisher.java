@@ -1,0 +1,32 @@
+package dev.exchangelab.infrastructure.kafka;
+
+import dev.exchangelab.application.OrderEventPublisher;
+import dev.exchangelab.application.event.LimitOrderSubmittedEvent;
+import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.ExecutionException;
+
+@Component
+@RequiredArgsConstructor
+public class KafkaOrderEventPublisher implements OrderEventPublisher {
+
+    private final KafkaTemplate<String, LimitOrderSubmittedEvent> kafkaTemplate;
+
+    @Override
+    public void publish(LimitOrderSubmittedEvent event) {
+        try {
+            kafkaTemplate.send(
+                    KafkaTopicConfig.ORDERS_SUBMITTED_TOPIC,
+                    event.orderId().toString(),
+                    event
+            ).get();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while publishing order event", exception);
+        } catch (ExecutionException exception) {
+            throw new IllegalStateException("Failed to publish order event", exception);
+        }
+    }
+}
