@@ -2,15 +2,19 @@
 
 ## 1. Overview
 
-The current `POST /api/orders/limit` API accepts a limit order and queues it
-through Kafka. Phase 6 changes the matching engine so active orders are matched
-from an in-memory order book instead of database queries or Redis.
+The target `POST /api/orders/limit` flow uses Redis for fast cash/stock
+reservation, Kafka for queueing accepted orders, and an in-memory order book for
+live matching.
+
+Phase 6 changed the matching engine so active orders are matched from memory
+instead of database queries or a Redis order book. Redis is still part of the
+target design for cash/stock reservation.
 
 The target flow is categorized into six stages:
 
 1. Create order.
-2. Queue order through Kafka.
-3. Reserve cash or stock.
+2. Reserve cash or stock in Redis.
+3. Queue order through Kafka.
 4. Match against in-memory order book.
 5. Record order and trade result.
 6. Settle cash and stock.
@@ -18,7 +22,8 @@ The target flow is categorized into six stages:
 ## 2. Pseudocode Flow
 
 Marker: `[DB read]` reads from database, `[DB write]` writes to database,
-`[Kafka]` uses Kafka, and `[Memory]` uses in-process memory.
+`[Redis]` uses Redis, `[Kafka]` uses Kafka, and `[Memory]` uses in-process
+memory.
 
 ```text
 # Server startup
@@ -33,31 +38,40 @@ Marker: `[DB read]` reads from database, `[DB write]` writes to database,
 # 1. Create order
 receive limit order request
 validate trader, symbol, side, price, and quantity
-create incoming order event
+create incoming order
 
-# 2. Queue order
+# 2. Reserve cash/stock in Redis
+# Redis stores available amount only:
+# cash:available:{traderId} = cash_balance - reserved_cash
+# stock:available:{traderId}:{symbol} = quantity - reserved_quantity
+
+if incoming order is BUY:
+    if Redis cash key is missing:
+        [DB read] load trader account
+        [Redis] set available cash = cash_balance - reserved_cash
+
+    required_cash = limit_price * quantity
+    [Redis] atomically require cash:available:{traderId} >= required_cash
+    [Redis] cash:available:{traderId} -= required_cash
+    attach reserved cash amount to Kafka event
+
+if incoming order is SELL:
+    if Redis stock key is missing:
+        [DB read] load stock position
+        [Redis] set available stock = quantity - reserved_quantity
+
+    required_stock = quantity
+    [Redis] atomically require stock:available:{traderId}:{symbol} >= required_stock
+    [Redis] stock:available:{traderId}:{symbol} -= required_stock
+    attach reserved stock quantity to Kafka event
+
+# 3. Queue order through Kafka
 [Kafka] publish accepted order event
 return 202 Accepted
 
-# 3. Reserve cash/stock
+# 4. Match against in-memory order book
 [Kafka] matching worker consumes accepted order event
 recreate incoming order from event
-
-if incoming order is BUY:
-    [DB read] load trader account
-    required_cash = limit_price * quantity
-    require available cash >= required_cash
-    reserve required_cash
-    [DB write] save trader account
-
-if incoming order is SELL:
-    [DB read] load stock position
-    required_stock = quantity
-    require available stock >= required_stock
-    reserve required_stock
-    [DB write] save stock position
-
-# 4. Match against in-memory order book
 [Memory] get order book for incoming order symbol
 
 if incoming order is BUY:
@@ -102,7 +116,11 @@ for each created trade:
     seller receives cash
     buyer receives stock
     seller delivers stock
-    reduce/release reserved cash or stock
+    reduce/release reserved cash or stock in DB
+
+    [Redis] seller cash:available:{sellerId} += trade amount
+    [Redis] buyer stock:available:{buyerId}:{symbol} += trade quantity
+    [Redis] buyer unused reserved cash returns to available cash if trade price < buy limit price
 
 [DB write] save updated trader accounts
 [DB write] save updated stock positions
@@ -124,34 +142,41 @@ for each created trade:
   - Lower price first.
   - Same price uses FIFO order.
 
-## 4. Current Reserve Rule
+## 4. Redis Reserve Rule
 
-- Reservation is still stored in DB columns for now.
-  - Buy reserves `trader_accounts.reserved_cash`.
-  - Sell reserves `stock_positions.reserved_quantity`.
-- Buy example:
-  - Cash balance is `1000`.
-  - Buy order reserves `300`.
-  - DB becomes `cash_balance = 1000`, `reserved_cash = 300`.
-- Sell example:
-  - Stock quantity is `10`.
-  - Sell order reserves `6`.
-  - DB becomes `quantity = 10`, `reserved_quantity = 6`.
+- Redis stores only available cash/stock.
+  - Buy example: `cash:available:T1 = 1000`, buy order reserves `300`, Redis
+    becomes `700`.
+  - Sell example: `stock:available:T1:ACME = 10`, sell order reserves `6`,
+    Redis becomes `4`.
+- Kafka event carries the reserved amount.
+  - Buy event carries `reservedCash = 300`.
+  - Sell event carries `reservedQuantity = 6`.
+- DB later records the real durable columns.
+  - Buy not matched: `cash_balance = 1000`, `reserved_cash = 300`.
+  - Buy fully matched at limit price: `cash_balance = 700`, `reserved_cash = 0`.
+  - Sell not matched: `quantity = 10`, `reserved_quantity = 6`.
+  - Sell fully matched: `quantity = 4`, `reserved_quantity = 0`.
 
 ## 5. Known Problems
 
-1. Kafka consumer must be idempotent.
+1. Redis reserve must be atomic.
+   - Do not `GET` in Redis, calculate in Java, then `SET` back.
+   - Use Lua script or another atomic Redis operation to check and deduct in one
+     step.
+2. Kafka publish failure needs rollback.
+   - If Redis reserve succeeds but Kafka publish fails, Redis must restore the
+     reserved cash/stock.
+3. Kafka consumer must be idempotent.
    - Duplicate order events must not create duplicate matches or duplicate DB
      updates.
-2. In-memory order book recovery must be reliable.
+   - Use a key like `processed:order:{orderId}`.
+4. In-memory order book recovery must be reliable.
    - On startup, active DB orders must rebuild memory in correct price-time
      order.
-3. Matching ownership is not finalized.
+5. Matching ownership is not finalized.
    - Long term direction is one matching worker owns one symbol or one symbol
      partition to avoid two workers matching the same order book.
-4. Memory loss is expected on restart.
-   - This is acceptable only because DB remains the durable recovery source.
-5. Reservation timing is still simplified.
-   - The API returns `202` after Kafka publish, while reserve failure can happen
-     later in the consumer. A later phase may move fast reservation before
-     publish.
+6. Reservation timing is not implemented yet.
+   - Current code still reserves cash/stock in MySQL inside the Kafka consumer.
+   - Target flow reserves in Redis before publishing to Kafka.
