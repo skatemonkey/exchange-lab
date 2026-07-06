@@ -105,15 +105,16 @@ Status: completed for now at commit `e38d72a`.
 > Move order matching behind Kafka so matching can be processed sequentially per
 > symbol before adding Redis reservation.
 
-- API publishes order events.
-- Kafka consumer performs matching.
-- Rerun the same k6 verification.
+- API publishes order events. Done.
+- Kafka consumer performs matching. Done.
+- Rerun the same k6 verification. Done:
+  [result](../load-test/results/02-kafka-mysql-buy-orders.md).
 
 Sub-phases:
 
 - 5.1 Add Kafka infrastructure: docker-compose, Spring dependency, application config, and one order topic. Done.
-- 5.2 Publish order event: HTTP request publishes an order event and returns `202`.
-- 5.3 Consume order event: Kafka consumer calls the processing use case for matching and settlement.
-- 5.4 Verify result: rerun the same seed, k6 script, and verification SQL.
+- 5.2 Publish order event: HTTP request publishes an order event and returns `202`. Done.
+- 5.3 Consume order event: Kafka consumer calls the processing use case for matching and settlement. Done.
+- 5.4 Verify result: rerun the same seed, k6 script, and verification SQL. Done.
 
-Status: in progress.
+Status: completed for now.
