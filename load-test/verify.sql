@@ -1,16 +1,14 @@
-\pset pager off
-
 select
     'total_cash_balance' as check_name,
     '10000000000.00000000' as expected,
-    coalesce(sum(cash_balance), 0)::text as actual,
+    cast(coalesce(sum(cash_balance), 0) as char) as actual,
     coalesce(sum(cash_balance), 0) = 10000000000.00000000 as pass
 from trader_accounts
 union all
 select
     'total_acme_quantity',
     '5000000.00000000',
-    coalesce(sum(quantity), 0)::text,
+    cast(coalesce(sum(quantity), 0) as char),
     coalesce(sum(quantity), 0) = 5000000.00000000
 from stock_positions
 where symbol = 'ACME'
@@ -18,7 +16,7 @@ union all
 select
     'invalid_cash_rows',
     '0',
-    count(*)::text,
+    cast(count(*) as char),
     count(*) = 0
 from trader_accounts
 where cash_balance < 0
@@ -28,7 +26,7 @@ union all
 select
     'invalid_stock_rows',
     '0',
-    count(*)::text,
+    cast(count(*) as char),
     count(*) = 0
 from stock_positions
 where quantity < 0
@@ -38,7 +36,7 @@ union all
 select
     'invalid_order_rows',
     '0',
-    count(*)::text,
+    cast(count(*) as char),
     count(*) = 0
 from orders
 where remaining_quantity < 0

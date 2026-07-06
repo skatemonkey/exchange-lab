@@ -17,10 +17,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.testcontainers.containers.MySQLContainer;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -30,14 +31,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@Testcontainers
+@Import(OrderPlacementIntegrationTest.TestcontainersConfig.class)
 class OrderPlacementIntegrationTest {
 
     private static final String SYMBOL = "ACME";
-
-    @Container
-    @ServiceConnection
-    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:18");
 
     @Autowired
     private ProcessLimitOrderUseCase processLimitOrderUseCase;
@@ -53,6 +50,18 @@ class OrderPlacementIntegrationTest {
 
     @Autowired
     private TradeDao tradeDao;
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class TestcontainersConfig {
+
+        @Bean
+        @ServiceConnection
+        MySQLContainer<?> mysqlContainer() {
+            return new MySQLContainer<>("mysql:8.4")
+                    .withUrlParam("connectionTimeZone", "UTC")
+                    .withUrlParam("forceConnectionTimeZoneToSession", "true");
+        }
+    }
 
     @BeforeEach
     void cleanDatabase() {

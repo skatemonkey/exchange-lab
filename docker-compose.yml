@@ -1,17 +1,22 @@
 services:
-  postgres:
-    image: postgres:18
-    container_name: exchange-lab-postgres
+  mysql:
+    image: mysql:8.4
+    container_name: exchange-lab-mysql
     environment:
-      POSTGRES_DB: exchange_lab
-      POSTGRES_USER: exchange_lab
-      POSTGRES_PASSWORD: exchange_lab
+      MYSQL_DATABASE: exchange_lab
+      MYSQL_USER: exchange_lab
+      MYSQL_PASSWORD: exchange_lab
+      MYSQL_ROOT_PASSWORD: exchange_lab_root
     ports:
-      - "5432:5432"
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U exchange_lab -d exchange_lab"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u exchange_lab -pexchange_lab --silent"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -46,5 +51,5 @@ services:
       retries: 20
 
 volumes:
-  postgres_data:
+  mysql_data:
   kafka_data:

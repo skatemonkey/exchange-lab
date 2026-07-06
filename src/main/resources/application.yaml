@@ -2,13 +2,17 @@ spring:
   application:
     name: exchange-lab
   datasource:
-    url: jdbc:postgresql://localhost:5432/exchange_lab
+    url: jdbc:mysql://localhost:3306/exchange_lab?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
     username: exchange_lab
     password: exchange_lab
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        type:
+          preferred_uuid_jdbc_type: CHAR
   kafka:
     bootstrap-servers: localhost:9092
     admin:

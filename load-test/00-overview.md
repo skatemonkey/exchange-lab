@@ -38,27 +38,27 @@ Previous run results are tracked in [Load Test Results](results/00-results.md).
 
 ## 3. Commands
 
-1. Start Postgres.
+1. Start MySQL and Kafka.
 
    ```powershell
-   docker compose up -d postgres
+   docker compose up -d mysql kafka
    ```
 
 2. Create tables.
 
    ```powershell
-   Get-Content .\database\schema.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+   Get-Content .\database\schema.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
    ```
 
-   Or run [schema.sql](../database/schema.sql) manually in a DataGrip SQL console.
+   Or run [schema.sql](../database/schema.sql) manually in a DataGrip MySQL console.
 
 3. Seed baseline data.
 
    ```powershell
-   Get-Content .\load-test\seed.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+   Get-Content .\load-test\seed.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
    ```
 
-   Or run [seed.sql](seed.sql) manually in a DataGrip SQL console.
+   Or run [seed.sql](seed.sql) manually in a DataGrip MySQL console.
 
 4. Start the app.
 
@@ -77,7 +77,7 @@ Previous run results are tracked in [Load Test Results](results/00-results.md).
 6. Verify DB totals.
 
    ```powershell
-   Get-Content .\load-test\verify.sql | docker exec -i exchange-lab-postgres psql -U exchange_lab -d exchange_lab
+   Get-Content .\load-test\verify.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
    ```
 
-   Or run [verify.sql](verify.sql) manually in a DataGrip SQL console.
+   Or run [verify.sql](verify.sql) manually in a DataGrip MySQL console.
