@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface OrderRepository {
 
-    List<Order> findMatchingOrdersFor(Order incomingOrder);
+    List<Order> findOpenOrders();
 
     void saveAll(List<Order> orders);
 }

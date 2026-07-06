@@ -1,5 +1,6 @@
 package dev.exchangelab;
 
+import dev.exchangelab.application.orderbook.InMemoryOrderBookRegistry;
 import dev.exchangelab.application.ProcessLimitOrderUseCase;
 import dev.exchangelab.application.event.LimitOrderSubmittedEvent;
 import dev.exchangelab.domain.model.Order;
@@ -40,6 +41,9 @@ class OrderPlacementIntegrationTest {
     private ProcessLimitOrderUseCase processLimitOrderUseCase;
 
     @Autowired
+    private InMemoryOrderBookRegistry orderBookRegistry;
+
+    @Autowired
     private OrderDao orderDao;
 
     @Autowired
@@ -69,6 +73,7 @@ class OrderPlacementIntegrationTest {
         orderDao.deleteAll();
         stockPositionDao.deleteAll();
         traderAccountDao.deleteAll();
+        orderBookRegistry.clear();
     }
 
     @Test
@@ -313,19 +318,18 @@ class OrderPlacementIntegrationTest {
     }
 
     private UUID restingSellOrder(UUID sellerId, String price, String orderQuantity, Instant createdAt) {
-        seedPosition(sellerId, orderQuantity, orderQuantity);
+        seedPosition(sellerId, orderQuantity, "0");
         UUID orderId = UUID.randomUUID();
-        orderDao.save(new OrderEntity(
+        Order sellOrder = Order.createLimit(
                 orderId,
                 sellerId,
                 SYMBOL,
                 Order.Side.SELL,
                 money(price),
                 quantity(orderQuantity),
-                quantity(orderQuantity),
-                Order.Status.ACCEPTED,
                 createdAt
-        ));
+        );
+        processLimitOrderUseCase.process(LimitOrderSubmittedEvent.from(sellOrder));
         return orderId;
     }
 

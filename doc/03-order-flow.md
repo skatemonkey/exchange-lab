@@ -2,80 +2,96 @@
 
 ## 1. Overview
 
-The current `POST /api/orders/limit` API is synchronous, but the target high-concurrency flow is categorized into six stages:
+The current `POST /api/orders/limit` API accepts a limit order and queues it
+through Kafka. Phase 6 changes the matching engine so active orders are matched
+from an in-memory order book instead of database queries or Redis.
+
+The target flow is categorized into six stages:
 
 1. Create order.
-2. Reserve cash/stock (Redis lazy load).
-3. Queue order (Kafka).
-4. Match against Redis order book.
-5. Record order/trade result.
+2. Queue order through Kafka.
+3. Reserve cash or stock.
+4. Match against in-memory order book.
+5. Record order and trade result.
 6. Settle cash and stock.
 
 ## 2. Pseudocode Flow
 
-Marker: `[DB read]` reads from database, `[DB write]` writes to database, `[Redis]` uses Redis, `[Kafka]` uses Kafka.
+Marker: `[DB read]` reads from database, `[DB write]` writes to database,
+`[Kafka]` uses Kafka, and `[Memory]` uses in-process memory.
 
 ```text
 # Server startup
 [DB read] load active open orders
-[Redis] preload active open orders into Redis order book
+    active means ACCEPTED or PARTIALLY_FILLED with remaining quantity > 0
+
+[Memory] rebuild order books by symbol
+    buy side: highest price first
+    sell side: lowest price first
+    same price level: oldest order first
 
 # 1. Create order
 receive limit order request
 validate trader, symbol, side, price, and quantity
-create incoming order
+create incoming order event
 
-# 2. Reserve cash/stock (Redis lazy load)
-# Redis stores available amount only:
-# cash:available:{traderId} = cash_balance - reserved_cash
-# stock:available:{traderId}:{symbol} = quantity - reserved_quantity
+# 2. Queue order
+[Kafka] publish accepted order event
+return 202 Accepted
+
+# 3. Reserve cash/stock
+[Kafka] matching worker consumes accepted order event
+recreate incoming order from event
 
 if incoming order is BUY:
-    if Redis cash key is missing:
-        [DB read] load trader account
-        [Redis] set available cash = cash_balance - reserved_cash
-
+    [DB read] load trader account
     required_cash = limit_price * quantity
-    [Redis] require cash:available:{traderId} >= required_cash
-    [Redis] cash:available:{traderId} -= required_cash
-    attach reserved cash amount to Kafka event
+    require available cash >= required_cash
+    reserve required_cash
+    [DB write] save trader account
 
 if incoming order is SELL:
-    if Redis stock key is missing:
-        [DB read] load stock position
-        [Redis] set available stock = quantity - reserved_quantity
-
+    [DB read] load stock position
     required_stock = quantity
-    [Redis] require stock:available:{traderId}:{symbol} >= required_stock
-    [Redis] stock:available:{traderId}:{symbol} -= required_stock
-    attach reserved stock quantity to Kafka event
+    require available stock >= required_stock
+    reserve required_stock
+    [DB write] save stock position
 
-# 3. Queue order (Kafka)
-[Kafka] publish accepted order event
+# 4. Match against in-memory order book
+[Memory] get order book for incoming order symbol
 
-# 4. Match against Redis order book
-[Kafka] matching worker consumes accepted order event
-[Redis] load opposite active orders that can match incoming order
+if incoming order is BUY:
+    [Memory] read sell side from lowest price to highest price
+    stop when best sell price > incoming buy limit price
 
-for each matching order:
+if incoming order is SELL:
+    [Memory] read buy side from highest price to lowest price
+    stop when best buy price < incoming sell limit price
+
+for each matching resting order:
     if incoming order has no remaining quantity:
         stop matching
 
-    trade quantity = min(incoming remaining quantity, matching remaining quantity)
-    trade price = matching order limit price
+    trade quantity = min(incoming remaining quantity, resting remaining quantity)
+    trade price = resting order limit price
 
     create trade result
     reduce incoming order remaining quantity
-    reduce matching order remaining quantity
+    reduce resting order remaining quantity
+
+    if resting order is fully filled:
+        [Memory] remove resting order from order book
+
+    if resting price level is empty:
+        [Memory] remove price level from order book
+
+if incoming order still has remaining quantity:
+    [Memory] add incoming order to its own side of the order book
 
 # 5. Record order/trade result
 [DB write] save incoming order
-[DB write] save updated matching orders
+[DB write] save updated resting orders
 [DB write] save created trades
-
-[Redis] add incoming order to order book if it still has remaining quantity
-[Redis] update partially filled matching orders
-[Redis] remove fully filled matching orders from order book
 
 # 6. Settle cash and stock
 for each created trade:
@@ -88,50 +104,54 @@ for each created trade:
     seller delivers stock
     reduce/release reserved cash or stock
 
-    [Redis] seller cash:available:{sellerId} += trade amount
-    [Redis] buyer stock:available:{buyerId}:{symbol} += trade quantity
-
 [DB write] save updated trader accounts
 [DB write] save updated stock positions
 ```
 
-## 3. Redis Order Book Rule
+## 3. In-Memory Order Book Rule
 
-- Redis stores only active open orders.
+- Memory stores only active open orders.
   - Active means waiting to match or partially filled.
-  - Fully filled or cancelled orders are removed from Redis.
-- DB stores the permanent order history.
-  - On startup, Redis can be rebuilt from active DB orders.
+  - Fully filled or cancelled orders are removed from memory.
+- DB stores durable order history.
+  - On startup, memory can be rebuilt from active DB orders.
+- One order book is owned per symbol.
+  - Example: `ACME` has its own buy side and sell side.
+- Buy side priority:
+  - Higher price first.
+  - Same price uses FIFO order.
+- Sell side priority:
+  - Lower price first.
+  - Same price uses FIFO order.
 
-## 4. Redis Reserve Rule
+## 4. Current Reserve Rule
 
-- Redis stores only available cash/stock.
-  - Buy example: `cash:available:T1 = 1000`, buy order reserves `300`, Redis becomes `700`.
-  - Sell example: `stock:available:T1:ACME = 10`, sell order reserves `6`, Redis becomes `4`.
-- Kafka event carries the reserved amount.
-  - Buy event carries `reservedCash = 300`.
-  - Sell event carries `reservedQuantity = 6`.
-- DB later records the real columns.
-  - Buy not matched: `cash_balance = 1000`, `reserved_cash = 300`.
-  - Buy fully matched: `cash_balance = 700`, `reserved_cash = 0`.
-  - Sell not matched: `quantity = 10`, `reserved_quantity = 6`.
-  - Sell fully matched: `quantity = 4`, `reserved_quantity = 0`.
+- Reservation is still stored in DB columns for now.
+  - Buy reserves `trader_accounts.reserved_cash`.
+  - Sell reserves `stock_positions.reserved_quantity`.
+- Buy example:
+  - Cash balance is `1000`.
+  - Buy order reserves `300`.
+  - DB becomes `cash_balance = 1000`, `reserved_cash = 300`.
+- Sell example:
+  - Stock quantity is `10`.
+  - Sell order reserves `6`.
+  - DB becomes `quantity = 10`, `reserved_quantity = 6`.
 
 ## 5. Known Problems
 
-1. Redis reserve must be atomic.
-   - Do not `GET` in Redis, calculate in Java, then `SET` back.
-   - Use Lua script or another atomic Redis operation to check and deduct in one
-     step.
-2. Kafka publish failure needs rollback.
-   - If Redis reserve succeeds but Kafka publish fails, Redis must restore the
-     reserved cash/stock.
-3. Kafka consumer must be idempotent.
+1. Kafka consumer must be idempotent.
    - Duplicate order events must not create duplicate matches or duplicate DB
      updates.
-   - Use a key like `processed:order:{orderId}`.
-4. Redis order book structure is not finalized.
-   - Need to decide exact keys for bid/ask sorted sets and full order data.
-5. Matching ownership is not finalized.
+2. In-memory order book recovery must be reliable.
+   - On startup, active DB orders must rebuild memory in correct price-time
+     order.
+3. Matching ownership is not finalized.
    - Long term direction is one matching worker owns one symbol or one symbol
-     partition to avoid two workers matching the same order.
+     partition to avoid two workers matching the same order book.
+4. Memory loss is expected on restart.
+   - This is acceptable only because DB remains the durable recovery source.
+5. Reservation timing is still simplified.
+   - The API returns `202` after Kafka publish, while reserve failure can happen
+     later in the consumer. A later phase may move fast reservation before
+     publish.

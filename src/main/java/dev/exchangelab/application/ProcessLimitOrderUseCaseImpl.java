@@ -1,6 +1,8 @@
 package dev.exchangelab.application;
 
 import dev.exchangelab.application.event.LimitOrderSubmittedEvent;
+import dev.exchangelab.application.orderbook.InMemoryOrderBookRegistry;
+import dev.exchangelab.domain.model.MatchResult;
 import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.domain.model.StockPosition;
 import dev.exchangelab.domain.model.Trade;
@@ -28,6 +30,7 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
     private final TradeRepository tradeRepository;
     private final TraderAccountRepository traderAccountRepository;
     private final StockPositionRepository stockPositionRepository;
+    private final InMemoryOrderBookRegistry inMemoryOrderBookRegistry;
 
     @Override
     @Transactional
@@ -68,26 +71,10 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
             }
         }
 
-        // Stage 3: Match against order book
-        List<Order> matchingOrders = orderRepository.findMatchingOrdersFor(incomingOrder);
-        List<Order> updatedMatchingOrders = new ArrayList<>();
-        List<Trade> executedTrades = new ArrayList<>();
-
-        for (Order matchingOrder : matchingOrders) {
-            if (incomingOrder.getRemainingQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-                break;
-            }
-
-            BigDecimal tradeQuantity = incomingOrder.getRemainingQuantity().min(
-                    matchingOrder.getRemainingQuantity()
-            );
-
-            executedTrades.add(Trade.create(incomingOrder, matchingOrder, tradeQuantity));
-            updatedMatchingOrders.add(matchingOrder);
-
-            incomingOrder.fill(tradeQuantity);
-            matchingOrder.fill(tradeQuantity);
-        }
+        // Stage 3: Match against in-memory order book
+        MatchResult matchResult = inMemoryOrderBookRegistry.match(incomingOrder);
+        List<Order> updatedMatchingOrders = matchResult.updatedRestingOrders();
+        List<Trade> executedTrades = matchResult.trades();
 
         // Stage 4: Create trades and update orders
         Map<UUID, TraderAccount> accountsByTraderId = new HashMap<>();

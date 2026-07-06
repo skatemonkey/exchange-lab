@@ -5,13 +5,12 @@ import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
 public class OrderQueryImpl implements OrderQuery {
 
-    private static final List<Order.Status> MATCHABLE_STATUSES = List.of(
+    private static final List<Order.Status> OPEN_STATUSES = List.of(
             Order.Status.ACCEPTED,
             Order.Status.PARTIALLY_FILLED
     );
@@ -23,42 +22,15 @@ public class OrderQueryImpl implements OrderQuery {
     }
 
     @Override
-    public List<OrderEntity> findMatchableBuyOrders(String symbol, BigDecimal sellLimitPrice) {
-        // Existing buy orders: highest bid first, then oldest order first.
+    public List<OrderEntity> findOpenOrders() {
         return entityManager.createQuery("""
                         select o
                         from OrderEntity o
-                        where o.symbol = :symbol
-                          and o.status in :matchableStatuses
-                          and o.side = :side
+                        where o.status in :openStatuses
                           and o.remainingQuantity > 0
-                          and o.limitPrice >= :sellLimitPrice
-                        order by o.limitPrice desc, o.createdAt asc
+                        order by o.symbol asc, o.createdAt asc
                         """, OrderEntity.class)
-                .setParameter("symbol", symbol)
-                .setParameter("matchableStatuses", MATCHABLE_STATUSES)
-                .setParameter("side", Order.Side.BUY)
-                .setParameter("sellLimitPrice", sellLimitPrice)
-                .getResultList();
-    }
-
-    @Override
-    public List<OrderEntity> findMatchableSellOrders(String symbol, BigDecimal buyLimitPrice) {
-        // Existing sell orders: lowest ask first, then oldest order first.
-        return entityManager.createQuery("""
-                        select o
-                        from OrderEntity o
-                        where o.symbol = :symbol
-                          and o.status in :matchableStatuses
-                          and o.side = :side
-                          and o.remainingQuantity > 0
-                          and o.limitPrice <= :buyLimitPrice
-                        order by o.limitPrice asc, o.createdAt asc
-                        """, OrderEntity.class)
-                .setParameter("symbol", symbol)
-                .setParameter("matchableStatuses", MATCHABLE_STATUSES)
-                .setParameter("side", Order.Side.SELL)
-                .setParameter("buyLimitPrice", buyLimitPrice)
+                .setParameter("openStatuses", OPEN_STATUSES)
                 .getResultList();
     }
 }

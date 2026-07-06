@@ -7,7 +7,6 @@ import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -17,28 +16,8 @@ public class JpaOrderRepository implements OrderRepository {
     private final OrderDao orderDao;
 
     @Override
-    public List<Order> findMatchingOrdersFor(Order incomingOrder) {
-        return switch (incomingOrder.getSide()) {
-            case BUY -> findMatchableSellOrders(
-                    incomingOrder.getSymbol(),
-                    incomingOrder.getLimitPrice()
-            );
-            case SELL -> findMatchableBuyOrders(
-                    incomingOrder.getSymbol(),
-                    incomingOrder.getLimitPrice()
-            );
-        };
-    }
-
-    private List<Order> findMatchableBuyOrders(String symbol, BigDecimal sellLimitPrice) {
-        return orderDao.findMatchableBuyOrders(symbol, sellLimitPrice)
-                .stream()
-                .map(this::toDomain)
-                .toList();
-    }
-
-    private List<Order> findMatchableSellOrders(String symbol, BigDecimal buyLimitPrice) {
-        return orderDao.findMatchableSellOrders(symbol, buyLimitPrice)
+    public List<Order> findOpenOrders() {
+        return orderDao.findOpenOrders()
                 .stream()
                 .map(this::toDomain)
                 .toList();

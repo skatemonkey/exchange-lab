@@ -106,6 +106,10 @@ public class Order {
         refreshStatus();
     }
 
+    public boolean isOpen() {
+        return status != Status.FILLED && remainingQuantity.compareTo(BigDecimal.ZERO) > 0;
+    }
+
     private void refreshStatus() {
         if (remainingQuantity.compareTo(BigDecimal.ZERO) == 0) {
             status = Status.FILLED;
