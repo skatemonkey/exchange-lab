@@ -5,6 +5,7 @@
 > - [1. Overview](#1-overview)
 > - [2. Long-Term Direction](#2-long-term-direction)
 > - [3. Development Roadmap](#3-development-roadmap)
+> - [4. Open Problems](#4-open-problems)
 
 ## 1. Overview
 
@@ -100,7 +101,7 @@ Status: completed for now at commit `02caa20`.
 
 Status: completed for now at commit `e38d72a`.
 
-### ⚪ Phase 5: Kafka-Based Order Processing
+### 🟢 Phase 5: Kafka-Based Order Processing
 
 > Move order matching behind Kafka so matching can be processed sequentially per
 > symbol before adding Redis reservation.
@@ -117,4 +118,35 @@ Sub-phases:
 - 5.3 Consume order event: Kafka consumer calls the processing use case for matching and settlement. Done.
 - 5.4 Verify result: rerun the same seed, k6 script, and verification SQL. Done.
 
-Status: completed for now.
+Status: completed.
+
+### ⚪ Phase 6: In-Memory Order Book Matching
+
+> Rework matching so the active order book is held in memory instead of using
+> database queries as the matching engine.
+
+Current problem:
+
+- The Kafka consumer now processes orders sequentially, but matching still loads
+  active opposite-side orders from the database.
+- That is acceptable for proving the Kafka flow, but it is not the real order
+  book design.
+
+Target direction:
+
+- Build an in-memory order book for active orders.
+- Keep buy and sell sides ordered by price-time priority.
+- Use the database as durable history and recovery source, not as the live
+  matching data structure.
+- Persist order/trade/account/position results after matching.
+
+Status: next.
+
+## 4. Open Problems
+
+This section tracks miscellaneous problems discovered while building the system.
+
+- Kafka consumer idempotency: if an order event is processed but the Kafka
+  offset is not committed before a crash or restart, Kafka may redeliver the
+  same event. The consumer should avoid creating duplicate trades or applying
+  settlement twice for the same `orderId`.
