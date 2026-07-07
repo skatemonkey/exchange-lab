@@ -148,10 +148,10 @@ Status: completed at commit `bbdc0bb`.
 > orders are published to Kafka.
 
 1. Infra: add Redis Docker/config/dependency. Done.
-2. Redis reservation: store, check, and deduct available cash/stock.
+2. Redis reservation: store, check, and deduct available cash/stock. Done.
 3. Flow change: reserve in Redis before Kafka publish, and carry reserved amount
-   in the event.
-4. DB sync: consumer updates MySQL so DB eventually matches Redis.
+   in the event. Done.
+4. DB sync: consumer updates MySQL so DB eventually matches Redis. Done.
 
 ## 4. Open Problems
 

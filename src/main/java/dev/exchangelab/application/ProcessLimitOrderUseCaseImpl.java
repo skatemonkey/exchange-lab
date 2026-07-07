@@ -11,6 +11,7 @@ import dev.exchangelab.domain.repository.OrderRepository;
 import dev.exchangelab.domain.repository.StockPositionRepository;
 import dev.exchangelab.domain.repository.TradeRepository;
 import dev.exchangelab.domain.repository.TraderAccountRepository;
+import dev.exchangelab.infrastructure.redis.RedisReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
     private final TraderAccountRepository traderAccountRepository;
     private final StockPositionRepository stockPositionRepository;
     private final InMemoryOrderBookRegistry inMemoryOrderBookRegistry;
+    private final RedisReservationService redisReservationService;
 
     @Override
     @Transactional
@@ -46,16 +48,14 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
                 event.submittedAt()
         );
 
-        // Stage 2: Reserve cash/stock
+        // Stage 2: Sync Redis reservation into MySQL
         switch (incomingOrder.getSide()) {
             case BUY -> {
                 TraderAccount traderAccount = traderAccountRepository
                         .findForCashReservation(incomingOrder.getTraderId())
                         .orElseThrow(() -> new IllegalStateException("Trader account not found"));
 
-                traderAccount.reserveCash(
-                        incomingOrder.getLimitPrice().multiply(incomingOrder.getQuantity())
-                );
+                traderAccount.reserveCash(reservedCashFor(event, incomingOrder));
                 traderAccountRepository.save(traderAccount);
             }
             case SELL -> {
@@ -66,7 +66,7 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
                         )
                         .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
 
-                stockPosition.reserve(incomingOrder.getQuantity());
+                stockPosition.reserve(reservedStockFor(event, incomingOrder));
                 stockPositionRepository.save(stockPosition);
             }
         }
@@ -80,6 +80,11 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
         Map<UUID, TraderAccount> accountsByTraderId = new HashMap<>();
         Map<StockPosition.Key, StockPosition> positionsByKey = new HashMap<>();
         Map<UUID, Order> ordersById = new HashMap<>();
+        Map<UUID, BigDecimal> availableCashToIncrease = new HashMap<>();
+        Map<UUID, BigDecimal> cashAvailableIfMissing = new HashMap<>();
+        Map<StockPosition.Key, BigDecimal> availableStockToIncrease = new HashMap<>();
+        Map<StockPosition.Key, BigDecimal> stockAvailableIfMissing = new HashMap<>();
+        boolean redisReserved = hasRedisReservation(event);
         ordersById.put(incomingOrder.getOrderId(), incomingOrder);
         updatedMatchingOrders.forEach(order -> ordersById.put(order.getOrderId(), order));
 
@@ -129,6 +134,29 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
             BigDecimal tradeValue = trade.getPrice().multiply(trade.getQuantity());
             BigDecimal reservedCashToRelease = buyOrder.getLimitPrice().multiply(trade.getQuantity());
 
+            if (redisReserved) {
+                cashAvailableIfMissing.putIfAbsent(
+                        trade.getSellerTraderId(),
+                        sellerAccount.availableCash()
+                );
+                addAmount(availableCashToIncrease, trade.getSellerTraderId(), tradeValue);
+
+                stockAvailableIfMissing.putIfAbsent(
+                        buyerPositionKey,
+                        buyerPosition.availableQuantity()
+                );
+                addAmount(availableStockToIncrease, buyerPositionKey, trade.getQuantity());
+
+                BigDecimal unusedReservedCash = reservedCashToRelease.subtract(tradeValue);
+                if (unusedReservedCash.compareTo(BigDecimal.ZERO) > 0) {
+                    cashAvailableIfMissing.putIfAbsent(
+                            trade.getBuyerTraderId(),
+                            buyerAccount.availableCash()
+                    );
+                    addAmount(availableCashToIncrease, trade.getBuyerTraderId(), unusedReservedCash);
+                }
+            }
+
             buyerAccount.settleBuy(tradeValue, reservedCashToRelease);
             sellerAccount.receiveCash(tradeValue);
 
@@ -147,6 +175,61 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
         orderRepository.saveAll(ordersToSave);
         tradeRepository.saveAll(executedTrades);
 
+        if (redisReserved) {
+            syncRedisAvailability(
+                    availableCashToIncrease,
+                    cashAvailableIfMissing,
+                    availableStockToIncrease,
+                    stockAvailableIfMissing
+            );
+        }
+
         return incomingOrder;
+    }
+
+    private BigDecimal reservedCashFor(LimitOrderSubmittedEvent event, Order incomingOrder) {
+        if (event.reservedCash() != null) {
+            return event.reservedCash();
+        }
+
+        return incomingOrder.getLimitPrice().multiply(incomingOrder.getQuantity());
+    }
+
+    private BigDecimal reservedStockFor(LimitOrderSubmittedEvent event, Order incomingOrder) {
+        if (event.reservedStock() != null) {
+            return event.reservedStock();
+        }
+
+        return incomingOrder.getQuantity();
+    }
+
+    private boolean hasRedisReservation(LimitOrderSubmittedEvent event) {
+        return event.reservedCash() != null || event.reservedStock() != null;
+    }
+
+    private <T> void addAmount(Map<T, BigDecimal> amounts, T key, BigDecimal amount) {
+        amounts.merge(key, amount, BigDecimal::add);
+    }
+
+    private void syncRedisAvailability(
+            Map<UUID, BigDecimal> availableCashToIncrease,
+            Map<UUID, BigDecimal> cashAvailableIfMissing,
+            Map<StockPosition.Key, BigDecimal> availableStockToIncrease,
+            Map<StockPosition.Key, BigDecimal> stockAvailableIfMissing
+    ) {
+        availableCashToIncrease.forEach((traderId, amount) ->
+                redisReservationService.increaseAvailableCash(
+                        traderId,
+                        amount,
+                        cashAvailableIfMissing.getOrDefault(traderId, BigDecimal.ZERO)
+                ));
+
+        availableStockToIncrease.forEach((positionKey, amount) ->
+                redisReservationService.increaseAvailableStock(
+                        positionKey.traderId(),
+                        positionKey.symbol(),
+                        amount,
+                        stockAvailableIfMissing.getOrDefault(positionKey, BigDecimal.ZERO)
+                ));
     }
 }

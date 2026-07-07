@@ -13,10 +13,20 @@ public record LimitOrderSubmittedEvent(
         Order.Side side,
         BigDecimal limitPrice,
         BigDecimal quantity,
+        BigDecimal reservedCash,
+        BigDecimal reservedStock,
         Instant submittedAt
 ) {
 
     public static LimitOrderSubmittedEvent from(Order order) {
+        return from(order, null, null);
+    }
+
+    public static LimitOrderSubmittedEvent from(
+            Order order,
+            BigDecimal reservedCash,
+            BigDecimal reservedStock
+    ) {
         return new LimitOrderSubmittedEvent(
                 order.getOrderId(),
                 order.getTraderId(),
@@ -24,6 +34,8 @@ public record LimitOrderSubmittedEvent(
                 order.getSide(),
                 order.getLimitPrice(),
                 order.getQuantity(),
+                reservedCash,
+                reservedStock,
                 order.getCreatedAt()
         );
     }

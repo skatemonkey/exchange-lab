@@ -26,7 +26,9 @@ public class StockPositionQueryImpl implements StockPositionQuery {
                         """, StockPositionEntity.class)
                 .setParameter("traderId", traderId)
                 .setParameter("symbol", symbol)
-                .getResultStream()
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
                 .findFirst();
     }
 }

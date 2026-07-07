@@ -22,9 +22,11 @@ public class TraderAccountQueryImpl implements TraderAccountQuery {
                         select a
                         from TraderAccountEntity a
                         where a.traderId = :traderId
-                        """, TraderAccountEntity.class)
+                """, TraderAccountEntity.class)
                 .setParameter("traderId", traderId)
-                .getResultStream()
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
                 .findFirst();
     }
 }
