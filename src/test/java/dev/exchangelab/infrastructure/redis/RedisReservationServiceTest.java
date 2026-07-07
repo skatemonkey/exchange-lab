@@ -76,11 +76,52 @@ class RedisReservationServiceTest {
     }
 
     @Test
+    void reservesCashWithFallbackWhenAvailableCashIsMissing() {
+        UUID traderId = UUID.randomUUID();
+
+        reservationService.reserveCash(traderId, money("300.25"), money("1000.25"));
+
+        assertThat(reservationService.findAvailableCash(traderId))
+                .hasValueSatisfying(amount -> assertThat(amount).isEqualByComparingTo("700"));
+    }
+
+    @Test
+    void reserveCashWithFallbackDoesNotOverwriteLoadedAvailableCash() {
+        UUID traderId = UUID.randomUUID();
+        reservationService.setAvailableCash(traderId, money("100"));
+
+        reservationService.reserveCash(traderId, money("20"), money("1000"));
+
+        assertThat(reservationService.findAvailableCash(traderId))
+                .hasValueSatisfying(amount -> assertThat(amount).isEqualByComparingTo("80"));
+    }
+
+    @Test
+    void reserveCashIfLoadedReturnsFalseWhenAvailableCashIsMissing() {
+        UUID traderId = UUID.randomUUID();
+
+        boolean reserved = reservationService.reserveCashIfLoaded(traderId, money("20"));
+
+        assertThat(reserved).isFalse();
+        assertThat(reservationService.findAvailableCash(traderId)).isEmpty();
+    }
+
+    @Test
     void reservesStockFromAvailableStock() {
         UUID traderId = UUID.randomUUID();
         reservationService.setAvailableStock(traderId, SYMBOL, quantity("10"));
 
         reservationService.reserveStock(traderId, SYMBOL, quantity("4"));
+
+        assertThat(reservationService.findAvailableStock(traderId, SYMBOL))
+                .hasValueSatisfying(amount -> assertThat(amount).isEqualByComparingTo("6"));
+    }
+
+    @Test
+    void reservesStockWithFallbackWhenAvailableStockIsMissing() {
+        UUID traderId = UUID.randomUUID();
+
+        reservationService.reserveStock(traderId, SYMBOL, quantity("4"), quantity("10"));
 
         assertThat(reservationService.findAvailableStock(traderId, SYMBOL))
                 .hasValueSatisfying(amount -> assertThat(amount).isEqualByComparingTo("6"));

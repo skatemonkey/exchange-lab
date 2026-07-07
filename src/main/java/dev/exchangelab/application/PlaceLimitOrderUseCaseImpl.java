@@ -39,17 +39,11 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
         switch (incomingOrder.getSide()) {
             case BUY -> {
                 reservedCash = incomingOrder.getLimitPrice().multiply(incomingOrder.getQuantity());
-                loadAvailableCashIfMissing(incomingOrder);
-                redisReservationService.reserveCash(incomingOrder.getTraderId(), reservedCash);
+                reserveCash(incomingOrder, reservedCash);
             }
             case SELL -> {
                 reservedStock = incomingOrder.getQuantity();
-                loadAvailableStockIfMissing(incomingOrder);
-                redisReservationService.reserveStock(
-                        incomingOrder.getTraderId(),
-                        incomingOrder.getSymbol(),
-                        reservedStock
-                );
+                reserveStock(incomingOrder, reservedStock);
             }
         }
 
@@ -61,8 +55,8 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
         return PlaceLimitOrderResponse.from(incomingOrder);
     }
 
-    private void loadAvailableCashIfMissing(Order incomingOrder) {
-        if (redisReservationService.findAvailableCash(incomingOrder.getTraderId()).isPresent()) {
+    private void reserveCash(Order incomingOrder, BigDecimal reservedCash) {
+        if (redisReservationService.reserveCashIfLoaded(incomingOrder.getTraderId(), reservedCash)) {
             return;
         }
 
@@ -70,16 +64,19 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
                 .findForCashReservation(incomingOrder.getTraderId())
                 .orElseThrow(() -> new IllegalStateException("Trader account not found"));
 
-        redisReservationService.setAvailableCash(
+        redisReservationService.reserveCash(
                 incomingOrder.getTraderId(),
+                reservedCash,
                 traderAccount.availableCash()
         );
     }
 
-    private void loadAvailableStockIfMissing(Order incomingOrder) {
-        if (redisReservationService
-                .findAvailableStock(incomingOrder.getTraderId(), incomingOrder.getSymbol())
-                .isPresent()) {
+    private void reserveStock(Order incomingOrder, BigDecimal reservedStock) {
+        if (redisReservationService.reserveStockIfLoaded(
+                incomingOrder.getTraderId(),
+                incomingOrder.getSymbol(),
+                reservedStock
+        )) {
             return;
         }
 
@@ -90,9 +87,10 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
                 )
                 .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
 
-        redisReservationService.setAvailableStock(
+        redisReservationService.reserveStock(
                 incomingOrder.getTraderId(),
                 incomingOrder.getSymbol(),
+                reservedStock,
                 stockPosition.availableQuantity()
         );
     }

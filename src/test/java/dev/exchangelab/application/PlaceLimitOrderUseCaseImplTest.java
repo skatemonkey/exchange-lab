@@ -50,8 +50,8 @@ class PlaceLimitOrderUseCaseImplTest {
     @Test
     void reservesCashInRedisBeforePublishingBuyOrderEvent() {
         UUID traderId = UUID.randomUUID();
-        when(redisReservationService.findAvailableCash(traderId))
-                .thenReturn(Optional.of(money("1000")));
+        when(redisReservationService.reserveCashIfLoaded(traderId, money("1000")))
+                .thenReturn(true);
 
         placeLimitOrderUseCase.placeLimitOrder(new PlaceLimitOrderRequest(
                 traderId,
@@ -64,7 +64,7 @@ class PlaceLimitOrderUseCaseImplTest {
         ArgumentCaptor<LimitOrderSubmittedEvent> eventCaptor =
                 ArgumentCaptor.forClass(LimitOrderSubmittedEvent.class);
         InOrder inOrder = inOrder(redisReservationService, orderEventPublisher);
-        inOrder.verify(redisReservationService).reserveCash(traderId, money("1000"));
+        inOrder.verify(redisReservationService).reserveCashIfLoaded(traderId, money("1000"));
         inOrder.verify(orderEventPublisher).publish(eventCaptor.capture());
 
         LimitOrderSubmittedEvent event = eventCaptor.getValue();
@@ -74,10 +74,10 @@ class PlaceLimitOrderUseCaseImplTest {
     }
 
     @Test
-    void lazyLoadsAvailableCashBeforeRedisCashReservation() {
+    void initializesAvailableCashWhenRedisCashIsMissing() {
         UUID traderId = UUID.randomUUID();
-        when(redisReservationService.findAvailableCash(traderId))
-                .thenReturn(Optional.empty());
+        when(redisReservationService.reserveCashIfLoaded(traderId, money("100")))
+                .thenReturn(false);
         when(traderAccountRepository.findForCashReservation(traderId))
                 .thenReturn(Optional.of(new TraderAccount(
                         traderId,
@@ -94,16 +94,16 @@ class PlaceLimitOrderUseCaseImplTest {
         ));
 
         InOrder inOrder = inOrder(redisReservationService, orderEventPublisher);
-        inOrder.verify(redisReservationService).setAvailableCash(traderId, money("800"));
-        inOrder.verify(redisReservationService).reserveCash(traderId, money("100"));
+        inOrder.verify(redisReservationService).reserveCashIfLoaded(traderId, money("100"));
+        inOrder.verify(redisReservationService).reserveCash(traderId, money("100"), money("800"));
         inOrder.verify(orderEventPublisher).publish(any());
     }
 
     @Test
     void reservesStockInRedisBeforePublishingSellOrderEvent() {
         UUID traderId = UUID.randomUUID();
-        when(redisReservationService.findAvailableStock(traderId, SYMBOL))
-                .thenReturn(Optional.of(quantity("10")));
+        when(redisReservationService.reserveStockIfLoaded(traderId, SYMBOL, quantity("4")))
+                .thenReturn(true);
 
         placeLimitOrderUseCase.placeLimitOrder(new PlaceLimitOrderRequest(
                 traderId,
@@ -116,7 +116,7 @@ class PlaceLimitOrderUseCaseImplTest {
         ArgumentCaptor<LimitOrderSubmittedEvent> eventCaptor =
                 ArgumentCaptor.forClass(LimitOrderSubmittedEvent.class);
         InOrder inOrder = inOrder(redisReservationService, orderEventPublisher);
-        inOrder.verify(redisReservationService).reserveStock(traderId, SYMBOL, quantity("4"));
+        inOrder.verify(redisReservationService).reserveStockIfLoaded(traderId, SYMBOL, quantity("4"));
         inOrder.verify(orderEventPublisher).publish(eventCaptor.capture());
 
         LimitOrderSubmittedEvent event = eventCaptor.getValue();
@@ -126,10 +126,10 @@ class PlaceLimitOrderUseCaseImplTest {
     }
 
     @Test
-    void lazyLoadsAvailableStockBeforeRedisStockReservation() {
+    void initializesAvailableStockWhenRedisStockIsMissing() {
         UUID traderId = UUID.randomUUID();
-        when(redisReservationService.findAvailableStock(traderId, SYMBOL))
-                .thenReturn(Optional.empty());
+        when(redisReservationService.reserveStockIfLoaded(traderId, SYMBOL, quantity("2")))
+                .thenReturn(false);
         when(stockPositionRepository.findForStockReservation(traderId, SYMBOL))
                 .thenReturn(Optional.of(new StockPosition(
                         UUID.randomUUID(),
@@ -148,8 +148,8 @@ class PlaceLimitOrderUseCaseImplTest {
         ));
 
         InOrder inOrder = inOrder(redisReservationService, orderEventPublisher);
-        inOrder.verify(redisReservationService).setAvailableStock(traderId, SYMBOL, quantity("7"));
-        inOrder.verify(redisReservationService).reserveStock(traderId, SYMBOL, quantity("2"));
+        inOrder.verify(redisReservationService).reserveStockIfLoaded(traderId, SYMBOL, quantity("2"));
+        inOrder.verify(redisReservationService).reserveStock(traderId, SYMBOL, quantity("2"), quantity("7"));
         inOrder.verify(orderEventPublisher).publish(any());
     }
 

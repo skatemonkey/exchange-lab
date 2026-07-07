@@ -30,6 +30,19 @@ public class RedisReservationService {
 
             return 1
             """, Long.class);
+    private static final DefaultRedisScript<Long> RESERVE_WITH_FALLBACK_SCRIPT = new DefaultRedisScript<>("""
+            if redis.call('EXISTS', KEYS[1]) == 0 then
+                redis.call('SET', KEYS[1], ARGV[2])
+            end
+
+            local remaining = redis.call('DECRBY', KEYS[1], ARGV[1])
+            if remaining < 0 then
+                redis.call('INCRBY', KEYS[1], ARGV[1])
+                return 0
+            end
+
+            return 1
+            """, Long.class);
     private static final DefaultRedisScript<Long> INCREASE_SCRIPT = new DefaultRedisScript<>("""
             if redis.call('EXISTS', KEYS[1]) == 0 then
                 redis.call('SET', KEYS[1], ARGV[2])
@@ -62,6 +75,23 @@ public class RedisReservationService {
         );
     }
 
+    public boolean reserveCashIfLoaded(UUID traderId, BigDecimal amount) {
+        return reserveIfLoaded(
+                cashAvailableKey(traderId),
+                amount,
+                "Trader does not have enough available cash"
+        );
+    }
+
+    public void reserveCash(UUID traderId, BigDecimal amount, BigDecimal availableIfMissing) {
+        reserveWithFallback(
+                cashAvailableKey(traderId),
+                amount,
+                availableIfMissing,
+                "Trader does not have enough available cash"
+        );
+    }
+
     public void increaseAvailableCash(
             UUID traderId,
             BigDecimal amount,
@@ -83,6 +113,28 @@ public class RedisReservationService {
                 stockAvailableKey(traderId, symbol),
                 amount,
                 "Available stock is not loaded in Redis",
+                "Trader does not have enough available stock"
+        );
+    }
+
+    public boolean reserveStockIfLoaded(UUID traderId, String symbol, BigDecimal amount) {
+        return reserveIfLoaded(
+                stockAvailableKey(traderId, symbol),
+                amount,
+                "Trader does not have enough available stock"
+        );
+    }
+
+    public void reserveStock(
+            UUID traderId,
+            String symbol,
+            BigDecimal amount,
+            BigDecimal availableIfMissing
+    ) {
+        reserveWithFallback(
+                stockAvailableKey(traderId, symbol),
+                amount,
+                availableIfMissing,
                 "Trader does not have enough available stock"
         );
     }
@@ -123,6 +175,52 @@ public class RedisReservationService {
         if (result == RESERVE_MISSING) {
             throw new IllegalStateException(missingMessage);
         }
+        if (result == RESERVE_INSUFFICIENT) {
+            throw new IllegalStateException(insufficientMessage);
+        }
+        if (result != RESERVE_SUCCESS) {
+            throw new IllegalStateException("Could not reserve available amount in Redis");
+        }
+    }
+
+    private boolean reserveIfLoaded(String key, BigDecimal amount, String insufficientMessage) {
+        validatePositive(amount);
+
+        Long result = redisTemplate.execute(
+                RESERVE_SCRIPT,
+                List.of(key),
+                toScaledAmount(amount)
+        );
+
+        if (result == RESERVE_MISSING) {
+            return false;
+        }
+        if (result == RESERVE_INSUFFICIENT) {
+            throw new IllegalStateException(insufficientMessage);
+        }
+        if (result != RESERVE_SUCCESS) {
+            throw new IllegalStateException("Could not reserve available amount in Redis");
+        }
+
+        return true;
+    }
+
+    private void reserveWithFallback(
+            String key,
+            BigDecimal amount,
+            BigDecimal availableIfMissing,
+            String insufficientMessage
+    ) {
+        validatePositive(amount);
+        validateNonNegative(availableIfMissing);
+
+        Long result = redisTemplate.execute(
+                RESERVE_WITH_FALLBACK_SCRIPT,
+                List.of(key),
+                toScaledAmount(amount),
+                toScaledAmount(availableIfMissing)
+        );
+
         if (result == RESERVE_INSUFFICIENT) {
             throw new IllegalStateException(insufficientMessage);
         }
