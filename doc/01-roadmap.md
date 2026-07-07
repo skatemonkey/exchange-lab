@@ -23,10 +23,10 @@ Future learning and implementation areas include:
 | 🟢 | Domain-driven design |
 | ⚪ | Hexagonal architecture |
 | ⚪ | Order matching and settlement correctness |
-| ⚪ | In-memory order book using `TreeMap` or `ConcurrentSkipListMap` for active orders |
+| 🟢 | In-memory order book using `TreeMap` or `ConcurrentSkipListMap` for active orders |
 | ⚪ | High-concurrency request handling |
-| ⚪ | Kafka for event streaming |
-| ⚪ | Redis for caching or fast coordination use cases |
+| 🟢 | Kafka for event streaming |
+| 🟡 | Redis for caching or fast coordination use cases |
 | ⚪ | Spring ecosystem tools such as Spring Cloud Gateway |
 | ⚪ | Spring Cloud Alibaba tools such as Nacos and Sentinel |
 | ⚪ | Infrastructure tools such as Nginx |
@@ -120,7 +120,7 @@ Sub-phases:
 
 Status: completed.
 
-### ⚪ Phase 6: In-Memory Order Book Matching
+### 🟢 Phase 6: In-Memory Order Book Matching
 
 > Rework matching so the active order book is held in memory instead of using
 > database queries as the matching engine.
@@ -134,13 +134,24 @@ Current problem:
 
 Target direction:
 
-- Build an in-memory order book for active orders.
-- Keep buy and sell sides ordered by price-time priority.
+- Build an in-memory order book for active orders. Done.
+- Keep buy and sell sides ordered by price-time priority. Done.
 - Use the database as durable history and recovery source, not as the live
-  matching data structure.
-- Persist order/trade/account/position results after matching.
+  matching data structure. Done.
+- Persist order/trade/account/position results after matching. Done.
 
-Status: next.
+Status: completed at commit `bbdc0bb`.
+
+### 🟡 Phase 7: Redis-Based Reservation
+
+> Add Redis as the fast reservation layer for cash and stock before accepted
+> orders are published to Kafka.
+
+1. Infra: add Redis Docker/config/dependency. Done.
+2. Redis reservation: store, check, and deduct available cash/stock.
+3. Flow change: reserve in Redis before Kafka publish, and carry reserved amount
+   in the event.
+4. DB sync: consumer updates MySQL so DB eventually matches Redis.
 
 ## 4. Open Problems
 
