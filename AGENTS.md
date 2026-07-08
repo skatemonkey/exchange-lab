@@ -21,6 +21,8 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 
 ## Project Layout
 
-- `doc/`: project documentation and design notes
+- `_support/docs/`: project documentation and design notes
+- `_support/database/`: database schema files
+- `_support/load-test/`: k6 scripts, seed data, and verification SQL
 - `src/`: application source code and tests
 - `build.gradle`: Gradle build configuration

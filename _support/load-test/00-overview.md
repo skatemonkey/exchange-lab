@@ -38,16 +38,16 @@ Previous run results are tracked in [Load Test Results](results/00-results.md).
 
 ## 3. Commands
 
-1. Start MySQL and Kafka.
+1. Start MySQL, Kafka, and Redis.
 
    ```powershell
-   docker compose up -d mysql kafka
+   docker compose up -d mysql kafka redis
    ```
 
 2. Create tables.
 
    ```powershell
-   Get-Content .\database\schema.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
+   Get-Content .\_support\database\schema.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
    ```
 
    Or run [schema.sql](../database/schema.sql) manually in a DataGrip MySQL console.
@@ -55,7 +55,7 @@ Previous run results are tracked in [Load Test Results](results/00-results.md).
 3. Seed baseline data.
 
    ```powershell
-   Get-Content .\load-test\seed.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
+   Get-Content .\_support\load-test\seed.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
    ```
 
    Or run [seed.sql](seed.sql) manually in a DataGrip MySQL console.
@@ -71,13 +71,13 @@ Previous run results are tracked in [Load Test Results](results/00-results.md).
 5. Run k6 in another terminal.
 
    ```powershell
-   k6 run .\load-test\k6\01-buy-orders.js
+   k6 run .\_support\load-test\k6\01-buy-orders.js
    ```
 
 6. Verify DB totals.
 
    ```powershell
-   Get-Content .\load-test\verify.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
+   Get-Content .\_support\load-test\verify.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
    ```
 
    Or run [verify.sql](verify.sql) manually in a DataGrip MySQL console.
