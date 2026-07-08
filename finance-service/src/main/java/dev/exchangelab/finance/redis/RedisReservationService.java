@@ -42,6 +42,14 @@ public class RedisReservationService {
 
             return 1
             """, Long.class);
+    private static final DefaultRedisScript<Long> INCREASE_SCRIPT = new DefaultRedisScript<>("""
+            if redis.call('EXISTS', KEYS[1]) == 0 then
+                redis.call('SET', KEYS[1], ARGV[2])
+            end
+
+            redis.call('INCRBY', KEYS[1], ARGV[1])
+            return 1
+            """, Long.class);
 
     private final StringRedisTemplate redisTemplate;
 
@@ -88,6 +96,23 @@ public class RedisReservationService {
         );
     }
 
+    public void increaseAvailableCash(
+            UUID traderId,
+            BigDecimal amount,
+            BigDecimal availableIfMissing
+    ) {
+        increase(cashAvailableKey(traderId), amount, availableIfMissing);
+    }
+
+    public void increaseAvailableStock(
+            UUID traderId,
+            String symbol,
+            BigDecimal amount,
+            BigDecimal availableIfMissing
+    ) {
+        increase(stockAvailableKey(traderId, symbol), amount, availableIfMissing);
+    }
+
     private boolean reserveIfLoaded(String key, BigDecimal amount, String insufficientMessage) {
         validatePositive(amount);
 
@@ -131,6 +156,22 @@ public class RedisReservationService {
         }
         if (result != RESERVE_SUCCESS) {
             throw new IllegalStateException("Could not reserve available amount in Redis");
+        }
+    }
+
+    private void increase(String key, BigDecimal amount, BigDecimal availableIfMissing) {
+        validatePositive(amount);
+        validateNonNegative(availableIfMissing);
+
+        Long result = redisTemplate.execute(
+                INCREASE_SCRIPT,
+                List.of(key),
+                toScaledAmount(amount),
+                toScaledAmount(availableIfMissing)
+        );
+
+        if (result != RESERVE_SUCCESS) {
+            throw new IllegalStateException("Could not increase available amount in Redis");
         }
     }
 

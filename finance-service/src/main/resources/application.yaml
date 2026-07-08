@@ -20,6 +20,19 @@ spring:
       hibernate:
         type:
           preferred_uuid_jdbc_type: CHAR
+  kafka:
+    bootstrap-servers: localhost:9092
+    admin:
+      auto-create: true
+    consumer:
+      group-id: exchange-lab-trade-settler
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: dev.exchangelab.*
+    listener:
+      concurrency: 1
 
 management:
   endpoints:

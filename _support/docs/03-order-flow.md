@@ -17,7 +17,8 @@ The target flow is categorized into six stages:
 3. Queue order through Kafka.
 4. Match against in-memory order book.
 5. Record order and trade result.
-6. Settle cash and stock.
+6. Publish matched trade event.
+7. Settle cash and stock.
 
 ## 2. Pseudocode Flow
 
@@ -107,7 +108,12 @@ if incoming order still has remaining quantity:
 [DB write] save updated resting orders
 [DB write] save created trades
 
-# 6. Settle cash and stock
+# 6. Publish matched trade event
+[Kafka] publish matched trade event
+
+# 7. Settle cash and stock
+[Kafka] finance worker consumes matched trade event
+
 for each created trade:
     [DB read] load affected trader accounts
     [DB read] load affected stock positions
@@ -177,6 +183,3 @@ for each created trade:
 5. Matching ownership is not finalized.
    - Long term direction is one matching worker owns one symbol or one symbol
      partition to avoid two workers matching the same order book.
-6. Reservation timing is not implemented yet.
-   - Current code still reserves cash/stock in MySQL inside the Kafka consumer.
-   - Target flow reserves in Redis before publishing to Kafka.

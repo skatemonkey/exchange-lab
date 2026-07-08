@@ -11,6 +11,7 @@ import dev.exchangelab.finance.persistence.TraderAccountRepository;
 import dev.exchangelab.finance.redis.RedisReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +21,12 @@ public class FinanceReservationService {
     private final TraderAccountRepository traderAccountRepository;
     private final StockPositionRepository stockPositionRepository;
 
+    @Transactional
     public ReserveCashResponse reserveCash(ReserveCashRequest request) {
+        TraderAccountEntity account = traderAccountRepository.findByIdForUpdate(request.traderId())
+                .orElseThrow(() -> new IllegalStateException("Trader account not found"));
+
         if (!redisReservationService.reserveCashIfLoaded(request.traderId(), request.amount())) {
-            TraderAccountEntity account = traderAccountRepository.findById(request.traderId())
-                    .orElseThrow(() -> new IllegalStateException("Trader account not found"));
             redisReservationService.reserveCash(
                     request.traderId(),
                     request.amount(),
@@ -31,18 +34,23 @@ public class FinanceReservationService {
             );
         }
 
+        account.reserveCash(request.amount());
+        traderAccountRepository.save(account);
+
         return new ReserveCashResponse(request.amount());
     }
 
+    @Transactional
     public ReserveStockResponse reserveStock(ReserveStockRequest request) {
+        StockPositionEntity position = stockPositionRepository
+                .findByTraderIdAndSymbolForUpdate(request.traderId(), request.symbol())
+                .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
+
         if (!redisReservationService.reserveStockIfLoaded(
                 request.traderId(),
                 request.symbol(),
                 request.amount()
         )) {
-            StockPositionEntity position = stockPositionRepository
-                    .findByTraderIdAndSymbol(request.traderId(), request.symbol())
-                    .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
             redisReservationService.reserveStock(
                     request.traderId(),
                     request.symbol(),
@@ -50,6 +58,9 @@ public class FinanceReservationService {
                     position.availableQuantity()
             );
         }
+
+        position.reserve(request.amount());
+        stockPositionRepository.save(position);
 
         return new ReserveStockResponse(request.amount());
     }

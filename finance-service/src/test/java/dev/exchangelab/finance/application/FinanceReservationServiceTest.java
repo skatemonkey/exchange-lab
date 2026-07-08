@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +41,13 @@ class FinanceReservationServiceTest {
     @Test
     void reservesCashUsingLoadedRedisBalance() {
         UUID traderId = UUID.randomUUID();
+        TraderAccountEntity account = new TraderAccountEntity(
+                traderId,
+                money("1000"),
+                money("0")
+        );
+        when(traderAccountRepository.findByIdForUpdate(traderId))
+                .thenReturn(Optional.of(account));
         when(redisReservationService.reserveCashIfLoaded(traderId, money("1000")))
                 .thenReturn(true);
 
@@ -51,7 +57,8 @@ class FinanceReservationServiceTest {
         ));
 
         assertThat(response.reservedCash()).isEqualByComparingTo("1000");
-        verify(traderAccountRepository, never()).findById(traderId);
+        assertThat(account.getReservedCash()).isEqualByComparingTo("1000");
+        verify(traderAccountRepository).save(account);
     }
 
     @Test
@@ -59,16 +66,19 @@ class FinanceReservationServiceTest {
         UUID traderId = UUID.randomUUID();
         when(redisReservationService.reserveCashIfLoaded(traderId, money("100")))
                 .thenReturn(false);
-        when(traderAccountRepository.findById(traderId))
-                .thenReturn(Optional.of(new TraderAccountEntity(
-                        traderId,
-                        money("1000"),
-                        money("200")
-                )));
+        TraderAccountEntity account = new TraderAccountEntity(
+                traderId,
+                money("1000"),
+                money("200")
+        );
+        when(traderAccountRepository.findByIdForUpdate(traderId))
+                .thenReturn(Optional.of(account));
 
         financeReservationService.reserveCash(new ReserveCashRequest(traderId, money("100")));
 
         verify(redisReservationService).reserveCash(traderId, money("100"), money("800"));
+        assertThat(account.getReservedCash()).isEqualByComparingTo("300");
+        verify(traderAccountRepository).save(account);
     }
 
     @Test
@@ -76,14 +86,15 @@ class FinanceReservationServiceTest {
         UUID traderId = UUID.randomUUID();
         when(redisReservationService.reserveStockIfLoaded(traderId, SYMBOL, quantity("4")))
                 .thenReturn(false);
-        when(stockPositionRepository.findByTraderIdAndSymbol(traderId, SYMBOL))
-                .thenReturn(Optional.of(new StockPositionEntity(
-                        UUID.randomUUID(),
-                        traderId,
-                        SYMBOL,
-                        quantity("10"),
-                        quantity("3")
-                )));
+        StockPositionEntity position = new StockPositionEntity(
+                UUID.randomUUID(),
+                traderId,
+                SYMBOL,
+                quantity("10"),
+                quantity("3")
+        );
+        when(stockPositionRepository.findByTraderIdAndSymbolForUpdate(traderId, SYMBOL))
+                .thenReturn(Optional.of(position));
 
         financeReservationService.reserveStock(new ReserveStockRequest(
                 traderId,
@@ -92,6 +103,8 @@ class FinanceReservationServiceTest {
         ));
 
         verify(redisReservationService).reserveStock(traderId, SYMBOL, quantity("4"), quantity("7"));
+        assertThat(position.getReservedQuantity()).isEqualByComparingTo("7");
+        verify(stockPositionRepository).save(position);
     }
 
     private static BigDecimal money(String value) {

@@ -9,6 +9,7 @@ import dev.exchangelab.match.domain.model.Order;
 import dev.exchangelab.match.domain.model.Trade;
 import dev.exchangelab.match.domain.repository.OrderRepository;
 import dev.exchangelab.match.domain.repository.TradeRepository;
+import dev.exchangelab.match.kafka.TradeEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,6 +39,9 @@ class ProcessLimitOrderUseCaseImplTest {
 
     @Mock
     private InMemoryOrderBookRegistry inMemoryOrderBookRegistry;
+
+    @Mock
+    private TradeEventPublisher tradeEventPublisher;
 
     @InjectMocks
     private ProcessLimitOrderUseCaseImpl processLimitOrderUseCase;
@@ -87,6 +91,15 @@ class ProcessLimitOrderUseCaseImplTest {
                 trades.size() == 1
                         && trades.getFirst().getBuyOrderId().equals(incomingOrderId)
                         && trades.getFirst().getSellOrderId().equals(restingSellOrder.getOrderId())
+        ));
+        verify(tradeEventPublisher).publish(argThat(event ->
+                event.buyOrderId().equals(incomingOrderId)
+                        && event.sellOrderId().equals(restingSellOrder.getOrderId())
+                        && event.buyerTraderId().equals(buyerId)
+                        && event.sellerTraderId().equals(sellerId)
+                        && event.price().compareTo(money("90")) == 0
+                        && event.quantity().compareTo(quantity("10")) == 0
+                        && event.buyOrderLimitPrice().compareTo(money("100")) == 0
         ));
     }
 
