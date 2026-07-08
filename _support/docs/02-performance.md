@@ -12,13 +12,16 @@ This file tracks measured TPS results from this point forward.
 
 ## 2. TPS Definitions
 
-| Metric | Meaning |
-|---|---|
-| End-to-end TPS | Completed settlements per second. |
-| Intake TPS | Orders accepted by `exchange-service` per second. |
-| Reservation TPS | Cash/stock reservations completed by `finance-service` per second. |
-| Match TPS | Orders/trades processed by `match-service` per second. |
-| Settlement TPS | Trades settled by `finance-service` per second. |
+| Metric | Meaning | Counter Used | Counter Adds 1 When |
+|---|---|---|---|
+| End-to-end TPS | Completed settlements per second. | `finance.settlements.completed` | A trade settlement finishes successfully. |
+| Intake TPS | Orders accepted by `exchange-service` per second. | `exchange.orders.accepted` | An order is reserved, published to Kafka, and accepted by `exchange-service`. |
+| Reservation TPS | Cash/stock reservations completed by `finance-service` per second. | `finance.reservations.completed` | Cash reserve for BUY or stock reserve for SELL finishes. |
+| Match TPS | Orders processed by `match-service` per second. | `match.orders.processed` | `match-service` finishes processing one order. |
+| Settlement TPS | Trades settled by `finance-service` per second. | `finance.settlements.completed` | A trade settlement finishes successfully. |
+
+End-to-end TPS and settlement TPS currently use the same counter because the
+current end-to-end flow is considered complete when settlement finishes.
 
 ## 3. Benchmark Results
 
