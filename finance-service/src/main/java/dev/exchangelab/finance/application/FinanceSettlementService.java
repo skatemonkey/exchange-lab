@@ -1,6 +1,8 @@
 package dev.exchangelab.finance.application;
 
 import dev.exchangelab.common.event.TradeMatchedEvent;
+import dev.exchangelab.finance.domain.StockPosition;
+import dev.exchangelab.finance.domain.TraderAccount;
 import dev.exchangelab.finance.persistence.StockPositionEntity;
 import dev.exchangelab.finance.persistence.StockPositionRepository;
 import dev.exchangelab.finance.persistence.TraderAccountEntity;
@@ -24,15 +26,15 @@ public class FinanceSettlementService {
 
     @Transactional
     public void settle(TradeMatchedEvent event) {
-        TraderAccountEntity buyerAccount = traderAccountRepository.findByIdForUpdate(event.buyerTraderId())
+        TraderAccountEntity buyerAccountEntity = traderAccountRepository.findByIdForUpdate(event.buyerTraderId())
                 .orElseThrow(() -> new IllegalStateException("Buyer account not found"));
-        TraderAccountEntity sellerAccount = traderAccountRepository.findByIdForUpdate(event.sellerTraderId())
+        TraderAccountEntity sellerAccountEntity = traderAccountRepository.findByIdForUpdate(event.sellerTraderId())
                 .orElseThrow(() -> new IllegalStateException("Seller account not found"));
 
-        StockPositionEntity sellerPosition = stockPositionRepository
+        StockPositionEntity sellerPositionEntity = stockPositionRepository
                 .findByTraderIdAndSymbolForUpdate(event.sellerTraderId(), event.symbol())
                 .orElseThrow(() -> new IllegalStateException("Seller stock position not found"));
-        StockPositionEntity buyerPosition = stockPositionRepository
+        StockPositionEntity buyerPositionEntity = stockPositionRepository
                 .findByTraderIdAndSymbolForUpdate(event.buyerTraderId(), event.symbol())
                 .orElseGet(() -> new StockPositionEntity(
                         UUID.randomUUID(),
@@ -41,6 +43,11 @@ public class FinanceSettlementService {
                         BigDecimal.ZERO,
                         BigDecimal.ZERO
                 ));
+
+        TraderAccount buyerAccount = buyerAccountEntity.toDomain();
+        TraderAccount sellerAccount = sellerAccountEntity.toDomain();
+        StockPosition sellerPosition = sellerPositionEntity.toDomain();
+        StockPosition buyerPosition = buyerPositionEntity.toDomain();
 
         BigDecimal buyerCashAvailableBefore = buyerAccount.availableCash();
         BigDecimal sellerCashAvailableBefore = sellerAccount.availableCash();
@@ -53,8 +60,13 @@ public class FinanceSettlementService {
         sellerPosition.settleSell(event.quantity());
         buyerPosition.receive(event.quantity());
 
-        traderAccountRepository.saveAll(List.of(buyerAccount, sellerAccount));
-        stockPositionRepository.saveAll(List.of(sellerPosition, buyerPosition));
+        buyerAccountEntity.updateFrom(buyerAccount);
+        sellerAccountEntity.updateFrom(sellerAccount);
+        sellerPositionEntity.updateFrom(sellerPosition);
+        buyerPositionEntity.updateFrom(buyerPosition);
+
+        traderAccountRepository.saveAll(List.of(buyerAccountEntity, sellerAccountEntity));
+        stockPositionRepository.saveAll(List.of(sellerPositionEntity, buyerPositionEntity));
 
         redisReservationService.increaseAvailableCash(
                 event.sellerTraderId(),

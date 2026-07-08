@@ -4,6 +4,8 @@ import dev.exchangelab.common.finance.ReserveCashRequest;
 import dev.exchangelab.common.finance.ReserveCashResponse;
 import dev.exchangelab.common.finance.ReserveStockRequest;
 import dev.exchangelab.common.finance.ReserveStockResponse;
+import dev.exchangelab.finance.domain.StockPosition;
+import dev.exchangelab.finance.domain.TraderAccount;
 import dev.exchangelab.finance.persistence.StockPositionEntity;
 import dev.exchangelab.finance.persistence.StockPositionRepository;
 import dev.exchangelab.finance.persistence.TraderAccountEntity;
@@ -23,8 +25,9 @@ public class FinanceReservationService {
 
     @Transactional
     public ReserveCashResponse reserveCash(ReserveCashRequest request) {
-        TraderAccountEntity account = traderAccountRepository.findByIdForUpdate(request.traderId())
+        TraderAccountEntity accountEntity = traderAccountRepository.findByIdForUpdate(request.traderId())
                 .orElseThrow(() -> new IllegalStateException("Trader account not found"));
+        TraderAccount account = accountEntity.toDomain();
 
         if (!redisReservationService.reserveCashIfLoaded(request.traderId(), request.amount())) {
             redisReservationService.reserveCash(
@@ -35,16 +38,18 @@ public class FinanceReservationService {
         }
 
         account.reserveCash(request.amount());
-        traderAccountRepository.save(account);
+        accountEntity.updateFrom(account);
+        traderAccountRepository.save(accountEntity);
 
         return new ReserveCashResponse(request.amount());
     }
 
     @Transactional
     public ReserveStockResponse reserveStock(ReserveStockRequest request) {
-        StockPositionEntity position = stockPositionRepository
+        StockPositionEntity positionEntity = stockPositionRepository
                 .findByTraderIdAndSymbolForUpdate(request.traderId(), request.symbol())
                 .orElseThrow(() -> new IllegalStateException("Trader stock position not found"));
+        StockPosition position = positionEntity.toDomain();
 
         if (!redisReservationService.reserveStockIfLoaded(
                 request.traderId(),
@@ -60,7 +65,8 @@ public class FinanceReservationService {
         }
 
         position.reserve(request.amount());
-        stockPositionRepository.save(position);
+        positionEntity.updateFrom(position);
+        stockPositionRepository.save(positionEntity);
 
         return new ReserveStockResponse(request.amount());
     }
