@@ -1,5 +1,8 @@
 package dev.exchangelab.infrastructure.persistence.entity;
 
+import dev.exchangelab.common.order.OrderSide;
+import dev.exchangelab.common.order.OrderStatus;
+
 import dev.exchangelab.domain.model.Order;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,7 +39,7 @@ public class OrderEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "side", nullable = false, length = 10)
-    private Order.Side side;
+    private OrderSide side;
 
     @Column(name = "limit_price", nullable = false, precision = 19, scale = 8)
     private BigDecimal limitPrice;
@@ -51,7 +54,7 @@ public class OrderEntity {
     @Setter
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private Order.Status status;
+    private OrderStatus status;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

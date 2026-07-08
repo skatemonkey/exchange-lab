@@ -1,7 +1,7 @@
 package dev.exchangelab.infrastructure.kafka;
 
 import dev.exchangelab.application.ProcessLimitOrderUseCase;
-import dev.exchangelab.application.event.LimitOrderSubmittedEvent;
+import dev.exchangelab.common.event.LimitOrderSubmittedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;

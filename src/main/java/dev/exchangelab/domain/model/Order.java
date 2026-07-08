@@ -1,5 +1,7 @@
 package dev.exchangelab.domain.model;
 
+import dev.exchangelab.common.order.OrderSide;
+import dev.exchangelab.common.order.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,28 +16,17 @@ public class Order {
     private final UUID orderId;
     private final UUID traderId;
     private final String symbol;
-    private final Side side;
+    private final OrderSide side;
     private final BigDecimal limitPrice;
     private final BigDecimal quantity;
     private BigDecimal remainingQuantity;
-    private Status status;
+    private OrderStatus status;
     private final Instant createdAt;
-
-    public enum Side {
-        BUY,
-        SELL
-    }
-
-    public enum Status {
-        ACCEPTED,
-        PARTIALLY_FILLED,
-        FILLED
-    }
 
     public static Order createLimit(
             UUID traderId,
             String symbol,
-            Side side,
+            OrderSide side,
             BigDecimal limitPrice,
             BigDecimal quantity
     ) {
@@ -54,7 +45,7 @@ public class Order {
             UUID orderId,
             UUID traderId,
             String symbol,
-            Side side,
+            OrderSide side,
             BigDecimal limitPrice,
             BigDecimal quantity,
             Instant createdAt
@@ -89,7 +80,7 @@ public class Order {
                 limitPrice,
                 quantity,
                 quantity,
-                Status.ACCEPTED,
+                OrderStatus.ACCEPTED,
                 createdAt
         );
     }
@@ -107,20 +98,20 @@ public class Order {
     }
 
     public boolean isOpen() {
-        return status != Status.FILLED && remainingQuantity.compareTo(BigDecimal.ZERO) > 0;
+        return status != OrderStatus.FILLED && remainingQuantity.compareTo(BigDecimal.ZERO) > 0;
     }
 
     private void refreshStatus() {
         if (remainingQuantity.compareTo(BigDecimal.ZERO) == 0) {
-            status = Status.FILLED;
+            status = OrderStatus.FILLED;
             return;
         }
 
         if (remainingQuantity.compareTo(quantity) < 0) {
-            status = Status.PARTIALLY_FILLED;
+            status = OrderStatus.PARTIALLY_FILLED;
             return;
         }
 
-        status = Status.ACCEPTED;
+        status = OrderStatus.ACCEPTED;
     }
 }

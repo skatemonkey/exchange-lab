@@ -1,8 +1,8 @@
 package dev.exchangelab.presentation;
 
 import dev.exchangelab.application.PlaceLimitOrderUseCase;
-import dev.exchangelab.presentation.dto.PlaceLimitOrderRequest;
-import dev.exchangelab.presentation.dto.PlaceLimitOrderResponse;
+import dev.exchangelab.common.dto.PlaceLimitOrderRequest;
+import dev.exchangelab.common.dto.PlaceLimitOrderResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

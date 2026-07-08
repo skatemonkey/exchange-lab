@@ -8,6 +8,29 @@ group = 'dev'
 version = '0.0.1-SNAPSHOT'
 description = 'exchange-lab'
 
+allprojects {
+    group = 'dev'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(26)
+        }
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(26)
@@ -19,6 +42,8 @@ repositories {
 }
 
 dependencies {
+    implementation project(':common')
+
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

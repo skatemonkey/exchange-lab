@@ -1,5 +1,7 @@
 package dev.exchangelab.application.orderbook;
 
+import dev.exchangelab.common.order.OrderSide;
+
 import dev.exchangelab.domain.model.MatchResult;
 import dev.exchangelab.domain.model.Order;
 import org.junit.jupiter.api.Test;
@@ -18,17 +20,17 @@ class InMemoryOrderBookRegistryTest {
     @Test
     void rebuildsOpenOrdersByCreatedAt() {
         InMemoryOrderBookRegistry registry = new InMemoryOrderBookRegistry();
-        Order olderSell = order(Order.Side.SELL, "100", "10", "2026-01-01T00:00:00Z");
-        Order newerSell = order(Order.Side.SELL, "100", "10", "2026-01-01T00:01:00Z");
+        Order olderSell = order(OrderSide.SELL, "100", "10", "2026-01-01T00:00:00Z");
+        Order newerSell = order(OrderSide.SELL, "100", "10", "2026-01-01T00:01:00Z");
 
         registry.rebuild(List.of(newerSell, olderSell));
-        MatchResult result = registry.match(order(Order.Side.BUY, "100", "10", "2026-01-01T00:02:00Z"));
+        MatchResult result = registry.match(order(OrderSide.BUY, "100", "10", "2026-01-01T00:02:00Z"));
 
         assertThat(result.trades()).hasSize(1);
         assertThat(result.trades().getFirst().getSellOrderId()).isEqualTo(olderSell.getOrderId());
     }
 
-    private static Order order(Order.Side side, String price, String quantity, String createdAt) {
+    private static Order order(OrderSide side, String price, String quantity, String createdAt) {
         return Order.createLimit(
                 UUID.randomUUID(),
                 UUID.randomUUID(),

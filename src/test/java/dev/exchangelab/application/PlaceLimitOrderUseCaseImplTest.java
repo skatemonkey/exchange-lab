@@ -1,13 +1,15 @@
 package dev.exchangelab.application;
 
-import dev.exchangelab.application.event.LimitOrderSubmittedEvent;
+import dev.exchangelab.common.order.OrderSide;
+
+import dev.exchangelab.common.event.LimitOrderSubmittedEvent;
 import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.domain.model.StockPosition;
 import dev.exchangelab.domain.model.TraderAccount;
 import dev.exchangelab.domain.repository.StockPositionRepository;
 import dev.exchangelab.domain.repository.TraderAccountRepository;
 import dev.exchangelab.infrastructure.redis.RedisReservationService;
-import dev.exchangelab.presentation.dto.PlaceLimitOrderRequest;
+import dev.exchangelab.common.dto.PlaceLimitOrderRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -56,7 +58,7 @@ class PlaceLimitOrderUseCaseImplTest {
         placeLimitOrderUseCase.placeLimitOrder(new PlaceLimitOrderRequest(
                 traderId,
                 SYMBOL,
-                Order.Side.BUY,
+                OrderSide.BUY,
                 money("100"),
                 quantity("10")
         ));
@@ -88,7 +90,7 @@ class PlaceLimitOrderUseCaseImplTest {
         placeLimitOrderUseCase.placeLimitOrder(new PlaceLimitOrderRequest(
                 traderId,
                 SYMBOL,
-                Order.Side.BUY,
+                OrderSide.BUY,
                 money("100"),
                 quantity("1")
         ));
@@ -108,7 +110,7 @@ class PlaceLimitOrderUseCaseImplTest {
         placeLimitOrderUseCase.placeLimitOrder(new PlaceLimitOrderRequest(
                 traderId,
                 SYMBOL,
-                Order.Side.SELL,
+                OrderSide.SELL,
                 money("100"),
                 quantity("4")
         ));
@@ -142,7 +144,7 @@ class PlaceLimitOrderUseCaseImplTest {
         placeLimitOrderUseCase.placeLimitOrder(new PlaceLimitOrderRequest(
                 traderId,
                 SYMBOL,
-                Order.Side.SELL,
+                OrderSide.SELL,
                 money("100"),
                 quantity("2")
         ));

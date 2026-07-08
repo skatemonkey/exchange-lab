@@ -26,7 +26,7 @@ Future learning and implementation areas include:
 | 🟢 | In-memory order book using `TreeMap` or `ConcurrentSkipListMap` for active orders |
 | ⚪ | High-concurrency request handling |
 | 🟢 | Kafka for event streaming |
-| 🟡 | Redis for caching or fast coordination use cases |
+| 🟢 | Redis for caching or fast coordination use cases |
 | ⚪ | Spring ecosystem tools such as Spring Cloud Gateway |
 | ⚪ | Spring Cloud Alibaba tools such as Nacos and Sentinel |
 | ⚪ | Infrastructure tools such as Nginx |
@@ -142,7 +142,7 @@ Target direction:
 
 Status: completed at commit `bbdc0bb`.
 
-### 🟡 Phase 7: Redis-Based Reservation
+### 🟢 Phase 7: Redis-Based Reservation
 
 > Add Redis as the fast reservation layer for cash and stock before accepted
 > orders are published to Kafka.
@@ -152,6 +152,33 @@ Status: completed at commit `bbdc0bb`.
 3. Flow change: reserve in Redis before Kafka publish, and carry reserved amount
    in the event. Done.
 4. DB sync: consumer updates MySQL so DB eventually matches Redis. Done.
+
+Status: completed at commit `1e02bfd`.
+
+### 🟡 Phase 8: Split Into Exchange, Finance, and Match Services
+
+> Split the current app into small services while keeping the same order flow
+> and infrastructure.
+
+Flow:
+
+`exchange-service -> finance-service reserve -> Kafka -> match-service -> trade event -> finance-service settle`
+
+- `exchange-service`: receive order requests and publish accepted orders.
+- `finance-service`: reserve cash/stock in Redis and settle trades.
+- `match-service`: consume order events, keep the in-memory order book, and match
+  trades.
+
+General steps:
+
+1. Create multi-module Gradle structure: `common`, `exchange-service`,
+   `finance-service`, and `match-service`. Done.
+2. Move shared events and DTOs into `common`. Done.
+3. Move order API and Kafka publishing into `exchange-service`.
+4. Move Redis reservation and finance APIs into `finance-service`.
+5. Add OpenFeign so `exchange-service` can call `finance-service`.
+6. Move Kafka consumer and in-memory order book matching into `match-service`.
+7. Start all services and rerun tests/k6.
 
 ## 4. Open Problems
 

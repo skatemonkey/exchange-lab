@@ -1,1 +1,6 @@
 rootProject.name = 'exchange-lab'
+
+include 'common'
+include 'exchange-service'
+include 'finance-service'
+include 'match-service'

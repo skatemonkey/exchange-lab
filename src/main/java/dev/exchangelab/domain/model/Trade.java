@@ -1,5 +1,7 @@
 package dev.exchangelab.domain.model;
 
+import dev.exchangelab.common.order.OrderSide;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -26,8 +28,8 @@ public class Trade {
             Order matchingOrder,
             BigDecimal tradeQuantity
     ) {
-        Order buyOrder = incomingOrder.getSide() == Order.Side.BUY ? incomingOrder : matchingOrder;
-        Order sellOrder = incomingOrder.getSide() == Order.Side.SELL ? incomingOrder : matchingOrder;
+        Order buyOrder = incomingOrder.getSide() == OrderSide.BUY ? incomingOrder : matchingOrder;
+        Order sellOrder = incomingOrder.getSide() == OrderSide.SELL ? incomingOrder : matchingOrder;
 
         return new Trade(
                 UUID.randomUUID(),

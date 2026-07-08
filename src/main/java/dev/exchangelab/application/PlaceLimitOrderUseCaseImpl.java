@@ -1,14 +1,14 @@
 package dev.exchangelab.application;
 
-import dev.exchangelab.application.event.LimitOrderSubmittedEvent;
+import dev.exchangelab.common.dto.PlaceLimitOrderRequest;
+import dev.exchangelab.common.dto.PlaceLimitOrderResponse;
+import dev.exchangelab.common.event.LimitOrderSubmittedEvent;
 import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.domain.model.StockPosition;
 import dev.exchangelab.domain.model.TraderAccount;
 import dev.exchangelab.domain.repository.StockPositionRepository;
 import dev.exchangelab.domain.repository.TraderAccountRepository;
 import dev.exchangelab.infrastructure.redis.RedisReservationService;
-import dev.exchangelab.presentation.dto.PlaceLimitOrderRequest;
-import dev.exchangelab.presentation.dto.PlaceLimitOrderResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -47,12 +47,8 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
             }
         }
 
-        orderEventPublisher.publish(LimitOrderSubmittedEvent.from(
-                incomingOrder,
-                reservedCash,
-                reservedStock
-        ));
-        return PlaceLimitOrderResponse.from(incomingOrder);
+        orderEventPublisher.publish(toEvent(incomingOrder, reservedCash, reservedStock));
+        return toResponse(incomingOrder);
     }
 
     private void reserveCash(Order incomingOrder, BigDecimal reservedCash) {
@@ -92,6 +88,36 @@ public class PlaceLimitOrderUseCaseImpl implements PlaceLimitOrderUseCase {
                 incomingOrder.getSymbol(),
                 reservedStock,
                 stockPosition.availableQuantity()
+        );
+    }
+
+    private LimitOrderSubmittedEvent toEvent(
+            Order order,
+            BigDecimal reservedCash,
+            BigDecimal reservedStock
+    ) {
+        return new LimitOrderSubmittedEvent(
+                order.getOrderId(),
+                order.getTraderId(),
+                order.getSymbol(),
+                order.getSide(),
+                order.getLimitPrice(),
+                order.getQuantity(),
+                reservedCash,
+                reservedStock,
+                order.getCreatedAt()
+        );
+    }
+
+    private PlaceLimitOrderResponse toResponse(Order order) {
+        return new PlaceLimitOrderResponse(
+                order.getOrderId(),
+                order.getTraderId(),
+                order.getSymbol(),
+                order.getSide(),
+                order.getLimitPrice(),
+                order.getQuantity(),
+                order.getStatus()
         );
     }
 }

@@ -1,5 +1,7 @@
 package dev.exchangelab.infrastructure.persistence.query;
 
+import dev.exchangelab.common.order.OrderStatus;
+
 import dev.exchangelab.domain.model.Order;
 import dev.exchangelab.infrastructure.persistence.entity.OrderEntity;
 import jakarta.persistence.EntityManager;
@@ -10,9 +12,9 @@ import java.util.List;
 @Repository
 public class OrderQueryImpl implements OrderQuery {
 
-    private static final List<Order.Status> OPEN_STATUSES = List.of(
-            Order.Status.ACCEPTED,
-            Order.Status.PARTIALLY_FILLED
+    private static final List<OrderStatus> OPEN_STATUSES = List.of(
+            OrderStatus.ACCEPTED,
+            OrderStatus.PARTIALLY_FILLED
     );
 
     private final EntityManager entityManager;

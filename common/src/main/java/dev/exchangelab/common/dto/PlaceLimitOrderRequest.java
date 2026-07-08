@@ -1,6 +1,6 @@
-package dev.exchangelab.presentation.dto;
+package dev.exchangelab.common.dto;
 
-import dev.exchangelab.domain.model.Order;
+import dev.exchangelab.common.order.OrderSide;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import java.util.UUID;
 public record PlaceLimitOrderRequest(
         UUID traderId,
         String symbol,
-        Order.Side side,
+        OrderSide side,
         BigDecimal limitPrice,
         BigDecimal quantity
 ) {

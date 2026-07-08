@@ -1,6 +1,8 @@
 package dev.exchangelab.application;
 
-import dev.exchangelab.application.event.LimitOrderSubmittedEvent;
+import dev.exchangelab.common.order.OrderSide;
+
+import dev.exchangelab.common.event.LimitOrderSubmittedEvent;
 import dev.exchangelab.application.orderbook.InMemoryOrderBookRegistry;
 import dev.exchangelab.domain.model.MatchResult;
 import dev.exchangelab.domain.model.Order;
@@ -62,7 +64,7 @@ class ProcessLimitOrderUseCaseImplTest {
                 UUID.randomUUID(),
                 sellerId,
                 SYMBOL,
-                Order.Side.SELL,
+                OrderSide.SELL,
                 money("90"),
                 quantity("10"),
                 Instant.parse("2026-01-01T00:00:00Z")
@@ -98,7 +100,7 @@ class ProcessLimitOrderUseCaseImplTest {
                 UUID.randomUUID(),
                 buyerId,
                 SYMBOL,
-                Order.Side.BUY,
+                OrderSide.BUY,
                 money("100"),
                 quantity("10"),
                 money("1000"),
