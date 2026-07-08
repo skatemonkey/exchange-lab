@@ -155,7 +155,7 @@ Status: completed at commit `bbdc0bb`.
 
 Status: completed at commit `1e02bfd`.
 
-### 🟡 Phase 8: Split Into Exchange, Finance, and Match Services
+### 🟢 Phase 8: Split Into Exchange, Finance, and Match Services
 
 > Split the current app into small services while keeping the same order flow
 > and infrastructure.
@@ -179,7 +179,9 @@ General steps:
 5. Add OpenFeign so `exchange-service` can call `finance-service`. Done.
 6. Move Kafka consumer and in-memory order book matching into `match-service`. Done.
 7. Publish matched trade events and settle them in `finance-service`. Done.
-8. Start all services and rerun tests/k6.
+8. Start all services and rerun tests/k6. Done.
+
+Status: completed.
 
 ## 4. Open Problems
 

@@ -1,9 +1,0 @@
-spring:
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-  kafka:
-    admin:
-      fail-fast: false
-    listener:
-      auto-startup: false
