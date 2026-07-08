@@ -177,7 +177,7 @@ General steps:
 3. Move order API and Kafka publishing into `exchange-service`. Done.
 4. Move Redis reservation and finance APIs into `finance-service`. Done.
 5. Add OpenFeign so `exchange-service` can call `finance-service`. Done.
-6. Move Kafka consumer and in-memory order book matching into `match-service`.
+6. Move Kafka consumer and in-memory order book matching into `match-service`. Done.
 7. Start all services and rerun tests/k6.
 
 ## 4. Open Problems
