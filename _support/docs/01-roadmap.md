@@ -209,6 +209,28 @@ General steps:
 
 Status: not started.
 
+### ⚪ Phase 10: Profile and Optimize Match Service
+
+> Phase 9 benchmarking found that `match-service` is the first bottleneck.
+
+Finding:
+
+- Intake and Redis reservation can handle higher target TPS.
+- `orders.submitted` Kafka lag grows when target TPS is raised.
+- `trades.matched` Kafka lag stays low, so settlement is probably not the first
+  bottleneck yet.
+
+General steps:
+
+1. Add detailed timing metrics inside `match-service`.
+2. Profile `match-service` with JVM tools such as JFR or VisualVM.
+3. Identify whether the bottleneck is matching logic, Kafka consumer throughput,
+   event publishing, locking, CPU, GC, or memory.
+4. Optimize the measured bottleneck.
+5. Rerun k6 and compare against the Phase 9 baseline.
+
+Status: not started.
+
 ## 4. Related Docs
 
 - [Performance / TPS Tracking](02-performance.md)
