@@ -185,7 +185,7 @@ General steps:
 
 Status: completed.
 
-### ⚪ Phase 9: End-to-End TPS Measurement
+### 🟢 Phase 9: End-to-End TPS Measurement
 
 > Measure real throughput for the full order flow, not only HTTP acceptance.
 
@@ -204,10 +204,10 @@ General steps:
 
 1. Add metrics for intake, reservation, matching, and settlement.
 2. Update k6/reporting to separate API TPS from end-to-end TPS.
-3. Run local benchmark first.
+3. Run local benchmark first. Done.
 4. Run server benchmark later for resume-quality numbers.
 
-Status: not started.
+Status: completed for local benchmark.
 
 ### ⚪ Phase 10: Profile and Optimize Match Service
 
@@ -228,6 +228,30 @@ General steps:
    event publishing, locking, CPU, GC, or memory.
 4. Optimize the measured bottleneck.
 5. Rerun k6 and compare against the Phase 9 baseline.
+
+Status: not started.
+
+### ⚪ Phase 11: Single-Server Deployment Benchmark
+
+> Deploy the current system to one cloud server first and measure a simple
+> server baseline before adding Jenkins, gateway, or load balancing.
+
+Target setup:
+
+- One 2C/4GB cloud server.
+- Manual deployment first, without Jenkins.
+- App services, MySQL, Kafka, Redis, and k6 may run on the same server for the
+  first baseline.
+
+General steps:
+
+1. Prepare server environment: Java, Docker, Git, and k6.
+2. Pull the repo and build the services manually.
+3. Start MySQL, Kafka, Redis, and the three Spring Boot services.
+4. Run the same k6 benchmark on the server.
+5. Document server specs, TPS, p95 latency, Kafka lag, error rate, and notes.
+6. Decide later whether to add Jenkins, GitHub Actions, gateway, or load
+   balancing.
 
 Status: not started.
 
