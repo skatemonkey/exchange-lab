@@ -5,7 +5,8 @@
 > - [1. Overview](#1-overview)
 > - [2. Long-Term Direction](#2-long-term-direction)
 > - [3. Development Roadmap](#3-development-roadmap)
-> - [4. Open Problems](#4-open-problems)
+> - [4. Related Docs](#4-related-docs)
+> - [5. Open Problems](#5-open-problems)
 
 ## 1. Overview
 
@@ -27,6 +28,7 @@ Future learning and implementation areas include:
 | ⚪ | High-concurrency request handling |
 | 🟢 | Kafka for event streaming |
 | 🟢 | Redis for caching or fast coordination use cases |
+| ⚪ | MyBatis or MyBatis-Plus for optimized MySQL access |
 | ⚪ | Spring ecosystem tools such as Spring Cloud Gateway |
 | ⚪ | Spring Cloud Alibaba tools such as Nacos and Sentinel |
 | ⚪ | Infrastructure tools such as Nginx |
@@ -183,7 +185,35 @@ General steps:
 
 Status: completed.
 
-## 4. Open Problems
+### ⚪ Phase 9: End-to-End TPS Measurement
+
+> Measure real throughput for the full order flow, not only HTTP acceptance.
+
+Main metric:
+
+`end-to-end TPS = completed settlements per second`
+
+Stage metrics:
+
+- Intake TPS: orders accepted by `exchange-service`.
+- Reservation TPS: cash/stock reservations completed by `finance-service`.
+- Match TPS: orders/trades processed by `match-service`.
+- Settlement TPS: trades settled by `finance-service`.
+
+General steps:
+
+1. Add metrics for intake, reservation, matching, and settlement.
+2. Update k6/reporting to separate API TPS from end-to-end TPS.
+3. Run local benchmark first.
+4. Run server benchmark later for resume-quality numbers.
+
+Status: not started.
+
+## 4. Related Docs
+
+- [Performance / TPS Tracking](02-performance.md)
+
+## 5. Open Problems
 
 This section tracks miscellaneous problems discovered while building the system.
 
