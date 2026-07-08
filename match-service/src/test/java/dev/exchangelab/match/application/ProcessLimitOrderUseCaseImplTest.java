@@ -10,6 +10,7 @@ import dev.exchangelab.match.domain.model.Trade;
 import dev.exchangelab.match.domain.repository.OrderRepository;
 import dev.exchangelab.match.domain.repository.TradeRepository;
 import dev.exchangelab.match.kafka.TradeEventPublisher;
+import dev.exchangelab.match.metrics.MatchMetrics;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,6 +43,9 @@ class ProcessLimitOrderUseCaseImplTest {
 
     @Mock
     private TradeEventPublisher tradeEventPublisher;
+
+    @Mock
+    private MatchMetrics matchMetrics;
 
     @InjectMocks
     private ProcessLimitOrderUseCaseImpl processLimitOrderUseCase;
@@ -101,6 +105,8 @@ class ProcessLimitOrderUseCaseImplTest {
                         && event.quantity().compareTo(quantity("10")) == 0
                         && event.buyOrderLimitPrice().compareTo(money("100")) == 0
         ));
+        verify(matchMetrics).orderProcessed();
+        verify(matchMetrics).tradesCreated(1);
     }
 
     private static BigDecimal money(String value) {

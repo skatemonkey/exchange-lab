@@ -10,6 +10,7 @@ import dev.exchangelab.common.finance.ReserveStockResponse;
 import dev.exchangelab.common.order.OrderStatus;
 import dev.exchangelab.exchange.finance.FinanceClient;
 import dev.exchangelab.exchange.kafka.OrderEventPublisher;
+import dev.exchangelab.exchange.metrics.ExchangeMetrics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class PlaceLimitOrderService {
 
     private final FinanceClient financeClient;
     private final OrderEventPublisher orderEventPublisher;
+    private final ExchangeMetrics exchangeMetrics;
 
     public PlaceLimitOrderResponse placeLimitOrder(PlaceLimitOrderRequest request) {
         UUID orderId = UUID.randomUUID();
@@ -60,6 +62,7 @@ public class PlaceLimitOrderService {
                 reservedStock,
                 submittedAt
         ));
+        exchangeMetrics.orderAccepted();
 
         return new PlaceLimitOrderResponse(
                 orderId,

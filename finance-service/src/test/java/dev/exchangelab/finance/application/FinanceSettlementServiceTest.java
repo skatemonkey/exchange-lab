@@ -1,6 +1,7 @@
 package dev.exchangelab.finance.application;
 
 import dev.exchangelab.common.event.TradeMatchedEvent;
+import dev.exchangelab.finance.metrics.FinanceMetrics;
 import dev.exchangelab.finance.persistence.StockPositionEntity;
 import dev.exchangelab.finance.persistence.StockPositionRepository;
 import dev.exchangelab.finance.persistence.TraderAccountEntity;
@@ -35,6 +36,9 @@ class FinanceSettlementServiceTest {
 
     @Mock
     private RedisReservationService redisReservationService;
+
+    @Mock
+    private FinanceMetrics financeMetrics;
 
     @InjectMocks
     private FinanceSettlementService financeSettlementService;
@@ -94,6 +98,7 @@ class FinanceSettlementServiceTest {
         verify(redisReservationService).increaseAvailableCash(sellerId, money("900"), money("0"));
         verify(redisReservationService).increaseAvailableStock(buyerId, SYMBOL, quantity("10"), quantity("0"));
         verify(redisReservationService).increaseAvailableCash(buyerId, money("100"), money("0"));
+        verify(financeMetrics).settlementCompleted();
     }
 
     private static BigDecimal money(String value) {

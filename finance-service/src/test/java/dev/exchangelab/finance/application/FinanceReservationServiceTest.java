@@ -2,6 +2,7 @@ package dev.exchangelab.finance.application;
 
 import dev.exchangelab.common.finance.ReserveCashRequest;
 import dev.exchangelab.common.finance.ReserveStockRequest;
+import dev.exchangelab.finance.metrics.FinanceMetrics;
 import dev.exchangelab.finance.persistence.StockPositionEntity;
 import dev.exchangelab.finance.persistence.StockPositionRepository;
 import dev.exchangelab.finance.persistence.TraderAccountEntity;
@@ -35,6 +36,9 @@ class FinanceReservationServiceTest {
     @Mock
     private StockPositionRepository stockPositionRepository;
 
+    @Mock
+    private FinanceMetrics financeMetrics;
+
     @InjectMocks
     private FinanceReservationService financeReservationService;
 
@@ -59,6 +63,7 @@ class FinanceReservationServiceTest {
         assertThat(response.reservedCash()).isEqualByComparingTo("1000");
         assertThat(account.getReservedCash()).isEqualByComparingTo("1000");
         verify(traderAccountRepository).save(account);
+        verify(financeMetrics).reservationCompleted();
     }
 
     @Test
@@ -79,6 +84,7 @@ class FinanceReservationServiceTest {
         verify(redisReservationService).reserveCash(traderId, money("100"), money("800"));
         assertThat(account.getReservedCash()).isEqualByComparingTo("300");
         verify(traderAccountRepository).save(account);
+        verify(financeMetrics).reservationCompleted();
     }
 
     @Test
@@ -105,6 +111,7 @@ class FinanceReservationServiceTest {
         verify(redisReservationService).reserveStock(traderId, SYMBOL, quantity("4"), quantity("7"));
         assertThat(position.getReservedQuantity()).isEqualByComparingTo("7");
         verify(stockPositionRepository).save(position);
+        verify(financeMetrics).reservationCompleted();
     }
 
     private static BigDecimal money(String value) {

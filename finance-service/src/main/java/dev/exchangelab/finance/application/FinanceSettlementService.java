@@ -3,6 +3,7 @@ package dev.exchangelab.finance.application;
 import dev.exchangelab.common.event.TradeMatchedEvent;
 import dev.exchangelab.finance.domain.StockPosition;
 import dev.exchangelab.finance.domain.TraderAccount;
+import dev.exchangelab.finance.metrics.FinanceMetrics;
 import dev.exchangelab.finance.persistence.StockPositionEntity;
 import dev.exchangelab.finance.persistence.StockPositionRepository;
 import dev.exchangelab.finance.persistence.TraderAccountEntity;
@@ -23,6 +24,7 @@ public class FinanceSettlementService {
     private final TraderAccountRepository traderAccountRepository;
     private final StockPositionRepository stockPositionRepository;
     private final RedisReservationService redisReservationService;
+    private final FinanceMetrics financeMetrics;
 
     @Transactional
     public void settle(TradeMatchedEvent event) {
@@ -88,5 +90,6 @@ public class FinanceSettlementService {
                     buyerCashAvailableBefore
             );
         }
+        financeMetrics.settlementCompleted();
     }
 }

@@ -9,6 +9,7 @@ import dev.exchangelab.match.domain.model.Trade;
 import dev.exchangelab.match.domain.repository.OrderRepository;
 import dev.exchangelab.match.domain.repository.TradeRepository;
 import dev.exchangelab.match.kafka.TradeEventPublisher;
+import dev.exchangelab.match.metrics.MatchMetrics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
     private final TradeRepository tradeRepository;
     private final InMemoryOrderBookRegistry inMemoryOrderBookRegistry;
     private final TradeEventPublisher tradeEventPublisher;
+    private final MatchMetrics matchMetrics;
 
     @Override
     @Transactional
@@ -52,6 +54,8 @@ public class ProcessLimitOrderUseCaseImpl implements ProcessLimitOrderUseCase {
         orderRepository.saveAll(ordersToSave);
         tradeRepository.saveAll(executedTrades);
         publishTradeEvents(executedTrades, ordersToSave);
+        matchMetrics.orderProcessed();
+        matchMetrics.tradesCreated(executedTrades.size());
 
         return incomingOrder;
     }

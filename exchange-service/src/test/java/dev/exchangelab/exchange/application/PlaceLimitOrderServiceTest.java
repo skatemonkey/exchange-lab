@@ -10,6 +10,7 @@ import dev.exchangelab.common.order.OrderSide;
 import dev.exchangelab.common.order.OrderStatus;
 import dev.exchangelab.exchange.finance.FinanceClient;
 import dev.exchangelab.exchange.kafka.OrderEventPublisher;
+import dev.exchangelab.exchange.metrics.ExchangeMetrics;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,6 +35,9 @@ class PlaceLimitOrderServiceTest {
 
     @Mock
     private OrderEventPublisher orderEventPublisher;
+
+    @Mock
+    private ExchangeMetrics exchangeMetrics;
 
     @InjectMocks
     private PlaceLimitOrderService placeLimitOrderService;
@@ -61,6 +65,7 @@ class PlaceLimitOrderServiceTest {
         assertThat(response.orderId()).isEqualTo(event.orderId());
         assertThat(event.reservedCash()).isEqualByComparingTo("1000");
         assertThat(event.reservedStock()).isNull();
+        verify(exchangeMetrics).orderAccepted();
     }
 
     @Test
@@ -84,6 +89,7 @@ class PlaceLimitOrderServiceTest {
         LimitOrderSubmittedEvent event = eventCaptor.getValue();
         assertThat(event.reservedCash()).isNull();
         assertThat(event.reservedStock()).isEqualByComparingTo("4");
+        verify(exchangeMetrics).orderAccepted();
     }
 
     private static BigDecimal money(String value) {

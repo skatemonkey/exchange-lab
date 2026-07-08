@@ -6,6 +6,7 @@ import dev.exchangelab.common.finance.ReserveStockRequest;
 import dev.exchangelab.common.finance.ReserveStockResponse;
 import dev.exchangelab.finance.domain.StockPosition;
 import dev.exchangelab.finance.domain.TraderAccount;
+import dev.exchangelab.finance.metrics.FinanceMetrics;
 import dev.exchangelab.finance.persistence.StockPositionEntity;
 import dev.exchangelab.finance.persistence.StockPositionRepository;
 import dev.exchangelab.finance.persistence.TraderAccountEntity;
@@ -22,6 +23,7 @@ public class FinanceReservationService {
     private final RedisReservationService redisReservationService;
     private final TraderAccountRepository traderAccountRepository;
     private final StockPositionRepository stockPositionRepository;
+    private final FinanceMetrics financeMetrics;
 
     @Transactional
     public ReserveCashResponse reserveCash(ReserveCashRequest request) {
@@ -40,6 +42,7 @@ public class FinanceReservationService {
         account.reserveCash(request.amount());
         accountEntity.updateFrom(account);
         traderAccountRepository.save(accountEntity);
+        financeMetrics.reservationCompleted();
 
         return new ReserveCashResponse(request.amount());
     }
@@ -67,6 +70,7 @@ public class FinanceReservationService {
         position.reserve(request.amount());
         positionEntity.updateFrom(position);
         stockPositionRepository.save(positionEntity);
+        financeMetrics.reservationCompleted();
 
         return new ReserveStockResponse(request.amount());
     }
