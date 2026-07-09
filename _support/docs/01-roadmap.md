@@ -231,10 +231,13 @@ General steps:
 
 Status: not started.
 
-### ⚪ Phase 11: Single-Server Deployment Benchmark
+### ⚫ Phase 11: Single-Server Deployment Benchmark
 
 > Deploy the current system to one cloud server first and measure a simple
 > server baseline before adding Jenkins, gateway, or load balancing.
+
+Status: deferred. A 2C/4GB cloud server is weaker than the current local PC and
+too expensive for the value it gives right now.
 
 Target setup:
 
@@ -252,8 +255,6 @@ General steps:
 5. Document server specs, TPS, p95 latency, Kafka lag, error rate, and notes.
 6. Decide later whether to add Jenkins, GitHub Actions, gateway, or load
    balancing.
-
-Status: not started.
 
 ## 4. Related Docs
 
