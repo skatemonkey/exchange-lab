@@ -166,7 +166,7 @@ The practical value is a clear record of the changes that worked in the selected
 ### 8.1. Research Design
 
 - First define the simplified stock-exchange backend simulator, its limit-order workflow, and its boundaries before introducing the name Exchange Lab.
-- Then explain the controlled quantitative design, the six sequential configurations, the fixed test conditions, the measurements, the validity rule, and why incremental comparison was selected.
+- Then explain the controlled quantitative design, the four sequential configurations, the fixed test conditions, the measurements, the validity rule, and why incremental comparison was selected.
 
 ### 8.2. Experimental System and Setup
 
@@ -205,7 +205,7 @@ The practical value is a clear record of the changes that worked in the selected
 
 #### 8.5.3. C2 In-Memory Order Matching
 
-- Use the same results columns and include the existing runs as preliminary evidence until formal testing replaces them. State that these runs used Kafka and in-memory matching without Redis.
+- Use the same results columns without repeating the testing procedure. Leave the results unfilled until formal testing is completed.
 
 #### 8.5.4. C3 Redis-Based Reservation
 

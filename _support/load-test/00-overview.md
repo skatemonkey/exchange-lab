@@ -34,7 +34,7 @@ Test scenario:
 - No stock position has reserved quantity greater than quantity.
 - No order has invalid remaining quantity or status.
 
-Previous run results are tracked in [Load Test Results](results/00-results.md).
+The formal comparison is defined in the [C0-C3 Load-Test Strategy](01-c0-c3-strategy.md), and measurements will be recorded in [C0-C3 Load-Test Results](02-c0-c3-results.md).
 
 ## 3. Commands
 

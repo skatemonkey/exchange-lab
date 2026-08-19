@@ -311,15 +311,11 @@ This section will record the results after Kafka-based sequential processing is 
 
 #### 8.5.3. C2 In-Memory Order Matching
 
-The following existing C2 measurements are preliminary single-run evidence. They were collected with Kafka and in-memory order matching but without Redis reservation. They will be replaced by the formal three-run results.
+This section will record the results after the in-memory order book is added to C1.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| 100 | 100.03 | 100.03 | 18.45 ms | 0% / none reported | 0 | Passed | Preliminary pass |
-| 110 | 110.03 | 110.03 | 19.19 ms | 0% / none reported | 0 | Passed | Preliminary pass |
-| 150 | 150.03 | 111.17 | 18.80 ms | 0% / none reported | Counter gap remained; Kafka lag was not captured | Not recorded | Preliminary fail |
-| 200 | 200.00 | 110.60 | 18.63 ms | 0% / none reported | Kafka lag: 1,988 | Not recorded | Preliminary fail |
-| 500 | 495.67 | approximately 226.73 | 116.84 ms | 0.06% / 122 | Kafka lag: 8,056 | Not recorded | Failed stress run |
+| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
 
 #### 8.5.4. C3 Redis-Based Reservation
 
@@ -337,7 +333,7 @@ The highest passing result from each configuration will be placed in the followi
 |---|---:|---:|---:|---|
 | C0: Synchronous database baseline | To be measured | To be measured | Baseline | To be recorded |
 | C1: Kafka sequential processing | To be measured | To be measured | To be calculated | To be recorded |
-| C2: In-memory matching | Preliminary: 110 | Preliminary: 110.03 | Formal comparison pending | 100 and 110 TPS passed; 150 TPS fell behind |
+| C2: In-memory matching | To be measured | To be measured | To be calculated | To be recorded |
 | C3: Redis reservation | To be measured | To be measured | To be calculated | To be recorded |
 
 The improvement between consecutive configurations will be calculated as follows:
