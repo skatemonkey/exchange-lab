@@ -21,6 +21,6 @@ Measure the baseline, add Kafka, in-memory matching, and Redis reservation one a
 
 ## 4. Dependency
 
-Starting Point -> Project Proposal Skeleton -> Project Proposal Draft -> Project System -> Presentation Slides -> Presentation (Oral Defence and Q&A)
+Starting Point -> Project Proposal Skeleton -> Project Proposal -> Project System -> Presentation Slides -> Presentation (Oral Defence and Q&A)
 
 Every later document and deliverable must remain aligned with this starting point.

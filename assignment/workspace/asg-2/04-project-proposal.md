@@ -1,4 +1,4 @@
-# Assignment 2 Project Proposal Draft: Sections 1-7
+# Assignment 2 Project Proposal
 
 > Project direction: [Assignment 2 Project Starting Point](02-project-core-idea.md)
 
@@ -22,12 +22,15 @@
 >   - [8.3. Experimental Configurations](#83-experimental-configurations)
 >   - [8.4. Experimental Procedure](#84-experimental-procedure)
 >   - [8.5. Measurement and Data Analysis](#85-measurement-and-data-analysis)
+>     - [8.5.1. C0 Synchronous Database Baseline](#851-c0-synchronous-database-baseline)
+>     - [8.5.2. C1 Kafka-Based Sequential Processing](#852-c1-kafka-based-sequential-processing)
+>     - [8.5.3. C2 In-Memory Order Matching](#853-c2-in-memory-order-matching)
+>     - [8.5.4. C3 Redis-Based Reservation](#854-c3-redis-based-reservation)
+>     - [8.5.5. Overall Comparison](#855-overall-comparison)
 >   - [8.6. Reliability, Validity, Ethics, and Limitations](#86-reliability-validity-ethics-and-limitations)
 > - [9. Research Plan](#9-research-plan)
 > - [10. Summary](#10-summary)
 > - [11. References](#11-references)
-
-> Draft status: This file contains the first seven proposal sections. The Abstract will be written last after the methodology, research plan, and summary are complete.
 
 ## 1. Introduction
 
@@ -280,16 +283,6 @@ flowchart LR
 
 The experiment uses three TPS values. Target TPS is the request rate configured in k6. Accepted TPS is the number of orders accepted by the system per second. Completed TPS is the number of settlements completed per second and is the primary result. In this controlled workload, each accepted buy order produces one trade and one settlement.
 
-Each table row represents one tested request rate. Formal C0-C3 results will use the median values from three runs under the same conditions. The existing C3 rows are preliminary single-run evidence that will be replaced after formal testing.
-
-| Configuration | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
-|---|---:|---:|---:|---:|---|---|---|---|
-| C3 | 100 | 100.03 | 100.03 | 18.45 ms | 0% / none reported | 0 | Passed | Preliminary pass |
-| C3 | 110 | 110.03 | 110.03 | 19.19 ms | 0% / none reported | 0 | Passed | Preliminary pass |
-| C3 | 150 | 150.03 | 111.17 | 18.80 ms | 0% / none reported | Counter gap remained; Kafka lag was not captured | Not recorded | Preliminary fail |
-| C3 | 200 | 200.00 | 110.60 | 18.63 ms | 0% / none reported | Kafka lag: 1,988 | Not recorded | Preliminary fail |
-| C3 | 500 | 495.67 | approximately 226.73 | 116.84 ms | 0.06% / 122 | Kafka lag: 8,056 | Not recorded | Failed stress run |
-
 Completed TPS will be calculated from the settlement-counter increase recorded at the end of the measurement period, before the drain wait. The post-drain counter and Kafka lag are used only to record unfinished work.
 
 A tested rate passes only when:
@@ -298,7 +291,56 @@ A tested rate passes only when:
 2. No unfinished work continues to accumulate, and the fixed drain period clears the remaining work.
 3. No requests or k6 iterations fail, and all SQL correctness checks pass.
 
-The sustainable TPS of a configuration is the highest target rate for which all three repeated runs pass. After C0-C3 are tested, the improvement between consecutive configurations will be calculated as follows:
+Each result row represents one tested request rate. Formal values will be the medians from three runs under the same conditions. The sustainable TPS of a configuration is the highest target rate for which all three repeated runs pass.
+
+#### 8.5.1. C0 Synchronous Database Baseline
+
+This section will record the results of the synchronous MySQL configuration before Kafka, in-memory matching, or Redis reservation is added.
+
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---|---|---|---|
+| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+
+#### 8.5.2. C1 Kafka-Based Sequential Processing
+
+This section will record the results after Kafka-based sequential processing is added to C0.
+
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---|---|---|---|
+| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+
+#### 8.5.3. C2 In-Memory Order Matching
+
+The following existing C2 measurements are preliminary single-run evidence. They were collected with Kafka and in-memory order matching but without Redis reservation. They will be replaced by the formal three-run results.
+
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---|---|---|---|
+| 100 | 100.03 | 100.03 | 18.45 ms | 0% / none reported | 0 | Passed | Preliminary pass |
+| 110 | 110.03 | 110.03 | 19.19 ms | 0% / none reported | 0 | Passed | Preliminary pass |
+| 150 | 150.03 | 111.17 | 18.80 ms | 0% / none reported | Counter gap remained; Kafka lag was not captured | Not recorded | Preliminary fail |
+| 200 | 200.00 | 110.60 | 18.63 ms | 0% / none reported | Kafka lag: 1,988 | Not recorded | Preliminary fail |
+| 500 | 495.67 | approximately 226.73 | 116.84 ms | 0.06% / 122 | Kafka lag: 8,056 | Not recorded | Failed stress run |
+
+#### 8.5.4. C3 Redis-Based Reservation
+
+This section will record the results after Redis reservation is added to C2.
+
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---|---|---|---|
+| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+
+#### 8.5.5. Overall Comparison
+
+The highest passing result from each configuration will be placed in the following table after formal testing.
+
+| Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
+|---|---:|---:|---:|---|
+| C0: Synchronous database baseline | To be measured | To be measured | Baseline | To be recorded |
+| C1: Kafka sequential processing | To be measured | To be measured | To be calculated | To be recorded |
+| C2: In-memory matching | Preliminary: 110 | Preliminary: 110.03 | Formal comparison pending | 100 and 110 TPS passed; 150 TPS fell behind |
+| C3: Redis reservation | To be measured | To be measured | To be calculated | To be recorded |
+
+The improvement between consecutive configurations will be calculated as follows:
 
 ```text
 TPS improvement = (new sustainable TPS - previous sustainable TPS) / previous sustainable TPS x 100%

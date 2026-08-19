@@ -27,6 +27,11 @@
 >   - [8.3. Experimental Configurations](#83-experimental-configurations)
 >   - [8.4. Experimental Procedure](#84-experimental-procedure)
 >   - [8.5. Measurement and Data Analysis](#85-measurement-and-data-analysis)
+>     - [8.5.1. C0 Synchronous Database Baseline](#851-c0-synchronous-database-baseline)
+>     - [8.5.2. C1 Kafka-Based Sequential Processing](#852-c1-kafka-based-sequential-processing)
+>     - [8.5.3. C2 In-Memory Order Matching](#853-c2-in-memory-order-matching)
+>     - [8.5.4. C3 Redis-Based Reservation](#854-c3-redis-based-reservation)
+>     - [8.5.5. Overall Comparison](#855-overall-comparison)
 >   - [8.6. Reliability, Validity, Ethics, and Limitations](#86-reliability-validity-ethics-and-limitations)
 > - [9. Research Plan](#9-research-plan)
 > - [10. Summary](#10-summary)
@@ -187,10 +192,29 @@ The practical value is a clear record of the changes that worked in the selected
 ### 8.5. Measurement and Data Analysis
 
 - Define target TPS, accepted TPS, and completed TPS briefly.
-- Use one results table containing configuration, target TPS, accepted TPS, completed TPS, p95 latency, errors and dropped iterations, unfinished work, SQL checks, and the decision.
-- State that each row represents one tested request rate and that formal values are medians from three repeated runs.
-- Include the existing C3 runs as preliminary evidence and state that they will be replaced after formal testing.
-- Define the three pass conditions and provide only the percentage-improvement formula.
+- Define the three pass conditions once before the configuration result sections.
+- State that each result row represents one tested request rate and that formal values are medians from three repeated runs.
+
+#### 8.5.1. C0 Synchronous Database Baseline
+
+- Provide a results table containing target, accepted, and completed TPS; p95 latency; errors and dropped iterations; unfinished work; SQL checks; and the decision.
+
+#### 8.5.2. C1 Kafka-Based Sequential Processing
+
+- Use the same results columns without repeating the testing procedure.
+
+#### 8.5.3. C2 In-Memory Order Matching
+
+- Use the same results columns and include the existing runs as preliminary evidence until formal testing replaces them. State that these runs used Kafka and in-memory matching without Redis.
+
+#### 8.5.4. C3 Redis-Based Reservation
+
+- Use the same results columns without repeating the testing procedure. Leave the results unfilled until Redis testing is completed.
+
+#### 8.5.5. Overall Comparison
+
+- Summarise the highest passing target TPS, median completed TPS, percentage change, and main finding for C0-C3.
+- Provide the percentage-improvement formula once in this final subsection.
 
 ### 8.6. Reliability, Validity, Ethics, and Limitations
 
