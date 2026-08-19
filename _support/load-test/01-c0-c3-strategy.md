@@ -6,23 +6,29 @@ Measure the highest sustainable completed TPS of C0, C1, C2, and C3 under the sa
 
 ## 2. Configurations
 
-| ID | Configuration |
-|---|---|
-| C0 | Synchronous processing with MySQL |
-| C1 | C0 with Kafka-based sequential processing |
-| C2 | C1 with in-memory order matching |
-| C3 | C2 with Redis reservation |
+| ID | Branch | Configuration | Required services |
+|---|---|---|---|
+| C0 | `codex/benchmark-c0` | Synchronous processing with MySQL | MySQL |
+| C1 | `codex/benchmark-c1` | C0 with Kafka-based sequential processing | MySQL and Kafka |
+| C2 | `codex/benchmark-c2` | C1 with in-memory order matching | MySQL and Kafka |
+| C3 | `codex/benchmark-c3` | C2 with Redis reservation | MySQL, Kafka, and Redis |
 
 Each configuration must use a recorded Git commit and the same API, seed data, workload, timing, metrics, and SQL checks.
 
 ## 3. Test Process
 
-1. Reset the required infrastructure and load the controlled seed data.
-2. Start the selected configuration, check its health, and complete the fixed warm-up period.
-3. Run the k6 workload at increasing target rates. Measure completed TPS before the drain period and unfinished work after draining.
-4. Run the SQL verification and record the result immediately in [C0-C3 Load-Test Results](02-c0-c3-results.md).
+1. Switch to the configuration branch, start its Docker Compose services and application, then reset and seed MySQL.
+2. Run `02-tps-benchmark.js` at `10`, `20`, `40`, `80`, `160` TPS until the first failure:
 
-Start at a low rate, increase the rate until the first failure, and then test smaller increments between the last pass and first failure. Repeat the highest passing rate three times.
+   ```powershell
+   k6 run -e RATE=20 -e DURATION=30s .\_support\load-test\k6\02-tps-benchmark.js
+   ```
+
+   For C0, add `-e METRICS_MODE=sync -e DRAIN_SECONDS=0` because every accepted response has already completed processing.
+
+3. Test smaller increments between the last pass and first failure, then repeat the highest passing rate three times.
+4. After every run, allow the fixed drain period, execute `verify.sql`, and reject any invalid run.
+5. Return to `v3` and record the verified result in [C0-C3 Load-Test Results](02-c0-c3-results.md).
 
 ## 4. Pass Rules
 

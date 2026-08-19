@@ -13,6 +13,7 @@ const PRE_ALLOCATED_VUS = Number(__ENV.PRE_ALLOCATED_VUS || 50);
 const MAX_VUS = Number(__ENV.MAX_VUS || 200);
 const BUYER_COUNT = Number(__ENV.BUYER_COUNT || 100);
 const DRAIN_SECONDS = Number(__ENV.DRAIN_SECONDS || 5);
+const METRICS_MODE = (__ENV.METRICS_MODE || 'services').toLowerCase();
 
 const acceptedOrders = new Counter('accepted_orders');
 const orderApiDuration = new Trend('order_api_duration');
@@ -104,6 +105,10 @@ function metricCount(source, name) {
 }
 
 function readMetrics() {
+  if (METRICS_MODE === 'sync') {
+    return {};
+  }
+
   const values = {};
   for (const metric of SERVICE_METRICS) {
     values[metric.name] = metricCount(metric.source, metric.name);
@@ -111,23 +116,33 @@ function readMetrics() {
   return values;
 }
 
-function printMetricReport(before, after, seconds) {
+function printMetricReport(before, measurementEnd, afterDrain, seconds) {
   console.log('\nTPS counter report');
   console.log(`Duration: ${DURATION}`);
   console.log(`Target rate: ${RATE} orders/sec`);
   console.log(`Drain wait: ${DRAIN_SECONDS}s`);
 
+  if (METRICS_MODE === 'sync') {
+    console.log('- Completion mode: synchronous; accepted TPS equals completed TPS.');
+    return;
+  }
+
   for (const metric of SERVICE_METRICS) {
     const start = before[metric.name];
-    const end = after[metric.name];
-    if (start === null || end === null) {
+    const end = measurementEnd[metric.name];
+    const drained = afterDrain[metric.name];
+    if (start === null || end === null || drained === null) {
       console.log(`- ${metric.label}: unavailable (${metric.name})`);
       continue;
     }
 
     const count = end - start;
     const tps = seconds > 0 ? count / seconds : 0;
-    console.log(`- ${metric.label}: count=${count}, tps=${tps.toFixed(2)}`);
+    const completedDuringDrain = drained - end;
+    console.log(
+      `- ${metric.label}: count=${count}, tps=${tps.toFixed(2)}, `
+      + `completedDuringDrain=${completedDuringDrain}`,
+    );
   }
 }
 
@@ -161,9 +176,16 @@ export default function () {
 }
 
 export function teardown(data) {
+  const measurementEnd = readMetrics();
+
   if (DRAIN_SECONDS > 0) {
     sleep(DRAIN_SECONDS);
   }
 
-  printMetricReport(data.metrics, readMetrics(), durationSeconds(DURATION));
+  printMetricReport(
+    data.metrics,
+    measurementEnd,
+    readMetrics(),
+    durationSeconds(DURATION),
+  );
 }
