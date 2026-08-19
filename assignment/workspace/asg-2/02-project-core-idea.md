@@ -13,7 +13,7 @@ This project starts with one goal: push sustainable completed TPS as high as pos
 
 ## 2. Problem Statement
 
-Many areas of a high-concurrency Java microservice system can be improved to increase throughput. The problem is how to identify and apply the most effective improvements across the system to push sustainable completed TPS as high as possible.
+Many areas of a high-concurrency Java transaction-processing system can be improved to increase throughput. The problem is how to identify and apply the most effective improvements across the system to push sustainable completed TPS as high as possible.
 
 ## 3. Approach
 

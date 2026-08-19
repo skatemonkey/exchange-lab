@@ -20,16 +20,7 @@
 >   - [8.1. Research Design](#81-research-design)
 >   - [8.2. Experimental System and Setup](#82-experimental-system-and-setup)
 >   - [8.3. Experimental Configurations](#83-experimental-configurations)
->     - [8.3.1. Synchronous Database Baseline](#831-synchronous-database-baseline)
->     - [8.3.2. Kafka-Based Sequential Processing](#832-kafka-based-sequential-processing)
->     - [8.3.3. In-Memory Order Matching](#833-in-memory-order-matching)
->     - [8.3.4. Redis-Based Reservation](#834-redis-based-reservation)
->     - [8.3.5. Microservice Configuration](#835-microservice-configuration)
->     - [8.3.6. Further Performance Iterations](#836-further-performance-iterations)
 >   - [8.4. Experimental Procedure](#84-experimental-procedure)
->     - [8.4.1. Step 1: Prepare the Configuration](#841-step-1-prepare-the-configuration)
->     - [8.4.2. Step 2: Execute the Benchmark](#842-step-2-execute-the-benchmark)
->     - [8.4.3. Step 3: Validate and Record the Result](#843-step-3-validate-and-record-the-result)
 >   - [8.5. Measurement and Data Analysis](#85-measurement-and-data-analysis)
 >   - [8.6. Reliability, Validity, Ethics, and Limitations](#86-reliability-validity-ethics-and-limitations)
 > - [9. Research Plan](#9-research-plan)
@@ -42,7 +33,7 @@
 
 Modern software systems often need to handle many requests at the same time. When demand increases, the system may become slow, return errors, or stop processing work reliably. Achieving high concurrency therefore means more than accepting a large number of requests. The system must complete a high volume of transactions consistently and continue doing so under sustained demand.
 
-Many areas of a system can be improved to increase TPS, including the application, database, cache, messaging service, network, and use of computing resources. Each area offers different performance techniques, but their value depends on the system and workload. These techniques are tools for increasing TPS; they are not the final goal. Although this project will evaluate a Java microservice system, the general improvement approach may also be useful for systems developed with other languages and technologies. The experimental findings will remain limited to the selected Java system.
+Many areas of a system can be improved to increase TPS, including the application, database, cache, messaging service, network, and use of computing resources. Each area offers different performance techniques, but their value depends on the system and workload. These techniques are tools for increasing TPS; they are not the final goal. Although this project will evaluate one Java transaction-processing system, the general improvement approach may also be useful for systems developed with other languages and technologies. The experimental findings will remain limited to the selected system.
 
 The selected experimental system is Exchange Lab, a backend system modelled on a stock exchange. It supports limit buy and sell orders, in which a trader specifies the stock symbol, quantity, and maximum buying price or minimum selling price. Processing an order may require the system to reserve the trader's cash or stock, match compatible orders by price and submission time, record the resulting trade, and settle the affected balances. The system is used as a transaction-processing testbed; the research does not attempt to reproduce every function of a commercial stock exchange.
 
@@ -58,19 +49,19 @@ These findings also show why a technique cannot be judged by its description alo
 
 ### 2.2. What Is Missing
 
-Existing studies use different applications, environments, workloads, test durations, and performance measurements. Many evaluate one component in isolation and report a local improvement without showing the effect on the complete request path. An improvement may therefore move the bottleneck instead of increasing completed end-to-end throughput (Meijer et al., 2024). The available evidence does not clearly show how far sustainable completed TPS can be increased when relevant improvements are selected from system measurements and applied iteratively across the same Java microservice system under consistent conditions.
+Existing studies use different applications, environments, workloads, test durations, and performance measurements. Many evaluate one component in isolation and report a local improvement without showing the effect on the complete request path. An improvement may therefore move the bottleneck instead of increasing completed end-to-end throughput (Meijer et al., 2024). The available evidence does not clearly show how far sustainable completed TPS can be increased when relevant improvements are selected from system measurements and applied iteratively across the same Java transaction-processing system under consistent conditions.
 
 Developers therefore have many possible techniques but limited guidance on which ones will produce the largest gain in a particular system. A controlled end-to-end test is needed to connect each applied change to a measurable difference in TPS.
 
 ### 2.3. How This Project Responds
 
-This project will use one Java microservice system, a consistent workload, and the same measurements across all tests. It will establish the baseline, identify improvement opportunities, apply relevant techniques, and retest the system repeatedly. The purpose is to push sustainable completed TPS as high as possible while latency, errors, stability, unfinished work, and resource usage remain acceptable.
+This project will use one Java transaction-processing system, a consistent workload, and the same measurements across all tests. It will establish the baseline, identify improvement opportunities, apply relevant techniques, and retest the system repeatedly. The purpose is to push sustainable completed TPS as high as possible while latency, errors, stability, unfinished work, and resource usage remain acceptable.
 
 A change will be considered useful only when it increases sustainable TPS for the complete system. This keeps the project focused on the final result rather than the number or complexity of the techniques used.
 
 ## 3. Problem Statement
 
-> Many areas of a high-concurrency Java microservice system can be improved to increase throughput. The problem is how to identify and apply the most effective improvements across the system to push sustainable completed TPS as high as possible.
+> Many areas of a high-concurrency Java transaction-processing system can be improved to increase throughput. The problem is how to identify and apply the most effective improvements across the system to push sustainable completed TPS as high as possible.
 
 The practical problem is not a shortage of performance techniques. It is determining which techniques genuinely raise the completed transaction rate of the selected system. Without a consistent baseline and repeated testing, an apparent improvement may only shift waiting work elsewhere or produce a short-lived peak that cannot be sustained.
 
@@ -90,7 +81,7 @@ The study will address the following research questions:
 
 ### 5.1. Research Aim
 
-To maximise the sustainable TPS of the selected Java microservice system.
+To maximise the sustainable TPS of the selected Java transaction-processing system.
 
 ### 5.2. Research Objectives
 
@@ -103,9 +94,9 @@ The research objectives are:
 
 ## 6. Scope of the Research
 
-This research focuses on improving the sustainable TPS of one selected Java microservice system. It will first establish the system's current TPS. Relevant performance techniques will then be applied and tested in the same environment. The study will determine the highest sustainable TPS achieved within the available project time and resources.
+This research focuses on improving the sustainable TPS of one selected Java transaction-processing system. It will first establish the system's current TPS. Relevant performance techniques will then be applied and tested in the same environment. The study will determine the highest sustainable TPS achieved within the available project time and resources.
 
-The work is limited to components available in the selected system and techniques that can be implemented during the project. The findings will explain what worked under the chosen workload and environment. They will not be treated as a universal configuration for every Java or microservice system.
+The work is limited to components available in the selected system and techniques that can be implemented during the project. The findings will explain what worked under the chosen workload and environment. They will not be treated as a universal configuration for every Java system.
 
 ## 7. Significance of the Research
 
@@ -117,103 +108,217 @@ The practical value is a clear record of the changes that worked in the selected
 
 ### 8.1. Research Design
 
-This study adopts a quantitative experimental design to investigate how different performance techniques affect the sustainable completed TPS of the selected Java microservice system. The unit of analysis is the end-to-end processing of a limit order, beginning when the order is submitted and ending when the resulting trade settlement is completed. Controlled experiments will compare versioned system configurations under the same workload and test environment.
+This research uses a simplified stock-exchange backend simulator as the environment for evaluating concurrent transaction processing. The simulator models one core exchange workflow: receiving limit buy and sell orders, reserving cash or stock, matching compatible orders, recording trades, and settling completed transactions. It does not reproduce an entire real exchange or use real money, investors, or live market data. Instead, the trading workflow provides a realistic transaction scenario whose inputs, processing stages, and final records can be repeatedly measured and verified. This experimental system is referred to as Exchange Lab.
 
-The initial comparison will begin with the basic synchronous database implementation. Later configurations will introduce Kafka-based processing, in-memory order matching, Redis-based reservation, and the current microservice implementation in controlled stages. After these foundational configurations have been evaluated, the current correct implementation will become the baseline for further optimisation. Measurements and profiling will be used to identify its active bottleneck. One relevant improvement will then be applied before the same test is repeated. This measure, identify, improve, and retest cycle will continue while feasible changes produce valid end-to-end gains.
-
-The independent variable is the system configuration or performance technique applied during each experiment. The primary dependent variable is sustainable completed TPS. Latency, error rate, unfinished work, resource usage, and data correctness will be used as supporting measures. Hardware, seed data, workload, request rate, test duration, warm-up, and drain conditions will be controlled when configurations are compared. A configuration will not be treated as an improvement when it raises apparent throughput by allowing errors, incorrect financial data, or continuously growing backlog. This design supports the measurement of the initial system in RQ1, the comparison of applied techniques in RQ2, and the determination of the highest sustainable TPS in RQ3.
+The study uses a controlled quantitative design to determine how architectural changes affect sustainable completed transactions per second (TPS). Four system configurations are evaluated in sequence, beginning with a synchronous database baseline and then adding Kafka, in-memory matching, and Redis reservation. Every configuration performs the same limit-order transaction under the same machine, test data, workload pattern, and measurement conditions. Completed TPS is the main result, while latency, errors, backlog, and resource usage help explain that result. A configuration is valid only when its transactions are correct and it does not accumulate a continuously growing backlog. Comparing each configuration with its immediate predecessor makes the effect of each major technique clearer than testing only the final system.
 
 ### 8.2. Experimental System and Setup
 
-The experimental testbed is Exchange Lab, a Java and Spring Boot backend for processing stock limit orders. Its business scope is intentionally narrow so that one complete transaction path can be tested repeatedly. A request submits a buy or sell order containing a trader identifier, stock symbol, limit price, and quantity. Processing includes validating the order, reserving cash or stock, matching compatible orders by price-time priority, recording any trade, and settling the affected balances. A transaction is considered complete when settlement finishes successfully.
+Exchange Lab is the experimental testbed. It is a Java and Spring Boot backend that supports limit buy and sell orders. A limit order specifies the trader, stock symbol, quantity, side, and price. This workflow is used because every order passes through reservation, matching, trade recording, and financial settlement, producing a complete transaction that can be measured and verified.
 
-All configurations will be tested on the same hardware with the same seed data, workload, test duration, and measurement procedure. MySQL 8.4 provides durable data storage, while Kafka 4.1.0 and Redis 7.4 are introduced only in the configurations that require them. Docker Compose will provide repeatable infrastructure. k6 will generate the workload, Micrometer and Spring Boot Actuator will record stage counters, and Kafka lag, JVM and operating-system measurements, and SQL verification queries will provide additional performance and correctness evidence. Exact hardware, software, JVM, and workload settings will be recorded before the formal experiments.
+```mermaid
+flowchart LR
+    A["Submit limit order"] --> B["Reserve cash or stock"]
+    B --> C["Match compatible orders"]
+    C --> D["Record the trade"]
+    D --> E["Settle cash and stock"]
+    E --> F["Transaction completed"]
+```
+
+*Figure 1. Common limit-order transaction used in every configuration.*
+
+The internal implementation changes between configurations, but the input, required business result, and test conditions remain consistent.
+
+| Item | Common experimental setup |
+|---|---|
+| Execution environment | The same computer, operating system, Java 26 runtime, and JVM settings |
+| Durable data | MySQL 8.4 |
+| Supporting platforms | Kafka 4.1.0 and Redis 7.4 only when required by the configuration |
+| Test data | The same trader accounts, stock positions, and initial sell orders |
+| Workload | The same k6 limit-buy-order workload and controlled request-rate pattern |
+| Observation | Application and system metrics, Kafka lag where applicable, and SQL correctness checks |
+
+The exact machine specifications, JVM settings, request rates, and warm-up, measurement, and drain periods will be fixed and recorded before formal testing.
 
 ### 8.3. Experimental Configurations
 
-The experiment will compare the following staged configurations. Each stage introduces one major architectural technique while retaining the same limit-order workload and evaluation rules.
+The experiment compares four staged configurations of the same exchange system. The internal order-intake, matching, and financial-processing responsibilities remain present throughout the experiment. Each configuration changes only the performance technique being evaluated.
 
-#### 8.3.1. Synchronous Database Baseline
+#### C0: Synchronous Database Baseline
 
-The baseline uses one Java application and MySQL. A request performs reservation, database-based matching, trade recording, and settlement synchronously before returning a response.
+C0 establishes the reference result. Order intake, matching, and financial processing communicate synchronously and use MySQL.
 
 ```mermaid
 flowchart LR
-    Client["k6 / Order Client"] -->|Submit limit order| Application["Synchronous Java application<br/>Reserve, match, record, and settle"]
-    Application <--> MySQL[("MySQL")]
-    Application -->|Completed response| Client
+    subgraph System["Exchange system"]
+        direction LR
+        Intake["Order intake"]
+        Match["Order matching"]
+        Finance["Financial processing"]
+        Intake -->|Synchronous order request| Match
+        Intake -->|Synchronous reservation| Finance
+        Match -->|Synchronous settlement| Finance
+    end
+    Client["k6 / Order Client"] -->|Submit limit order| Intake
+    Intake <--> MySQL[("MySQL")]
+    Match <--> MySQL
+    Finance <--> MySQL
 ```
 
-*Figure 1. Synchronous database baseline.*
+*Figure 2. C0 synchronous database baseline.*
 
-#### 8.3.2. Kafka-Based Sequential Processing
+#### C1: Kafka-Based Sequential Processing
 
-Kafka is introduced between order intake and matching. The API accepts and queues the order, while one consumer processes matching sequentially to prevent concurrent requests from modifying the same resting order.
-
-#### 8.3.3. In-Memory Order Matching
-
-The active order book is moved from repeated database queries into an in-memory price-time structure. MySQL remains the durable store for orders and trades.
-
-#### 8.3.4. Redis-Based Reservation
-
-Redis is introduced for atomic cash and stock availability checks before accepted orders are published to Kafka. MySQL continues to hold the durable financial records.
-
-#### 8.3.5. Microservice Configuration
-
-The application is divided into exchange, match, and finance services. The exchange service accepts orders, the match service owns the in-memory order book, and the finance service performs reservation and settlement.
+C1 adds Kafka between order intake and matching and between matching and financial settlement. One consumer processes submitted orders sequentially.
 
 ```mermaid
 flowchart LR
-    Client["k6 / Order Client"] -->|Submit limit order| Exchange["exchange-service"]
-    Exchange -->|Reserve cash or stock| Finance["finance-service"]
+    subgraph System["Exchange system"]
+        direction LR
+        Intake["Order intake"]
+        Match["Order matching"]
+        Finance["Financial processing"]
+    end
+    Client["k6 / Order Client"] -->|Submit limit order| Intake
+    Intake -->|Synchronous reservation| Finance
+    Intake --> OrdersTopic[["Kafka: orders.submitted"]]
+    OrdersTopic --> Match
+    Match --> TradesTopic[["Kafka: trades.matched"]]
+    TradesTopic --> Finance
+    Intake <--> MySQL[("MySQL")]
+    Finance --> MySQL[("MySQL")]
+    Match --> MySQL
+```
+
+*Figure 3. C1 configuration with Kafka-based sequential processing.*
+
+#### C2: In-Memory Order Matching
+
+C2 retains Kafka and adds an in-memory price-time order book. MySQL continues to store orders and trades durably.
+
+```mermaid
+flowchart LR
+    subgraph System["Exchange system"]
+        direction LR
+        Intake["Order intake"]
+        Match["Order matching"]
+        Finance["Financial processing"]
+        Book[("In-memory order book")]
+    end
+    Client["k6 / Order Client"] -->|Submit limit order| Intake
+    Intake -->|Synchronous reservation| Finance
+    Intake --> OrdersTopic[["Kafka: orders.submitted"]]
+    OrdersTopic --> Match
+    Match <--> Book
+    Match --> MySQL
+    Match --> TradesTopic[["Kafka: trades.matched"]]
+    TradesTopic --> Finance
+    Intake <--> MySQL[("MySQL")]
+    Finance --> MySQL
+```
+
+*Figure 4. C2 configuration with in-memory order matching.*
+
+#### C3: Redis-Based Reservation
+
+C3 retains Kafka and in-memory matching while adding Redis for atomic cash and stock reservation. MySQL remains the durable store.
+
+```mermaid
+flowchart LR
+    subgraph System["Exchange system"]
+        direction LR
+        Intake["Order intake"]
+        Match["Order matching"]
+        Finance["Financial processing"]
+        Book[("In-memory order book")]
+    end
+    Client["k6 / Order Client"] -->|Submit limit order| Intake
+    Intake -->|Reserve cash or stock| Finance
     Finance --> Redis[("Redis")]
     Finance --> MySQL[("MySQL")]
-    Exchange --> OrdersTopic[["Kafka: orders.submitted"]]
-    OrdersTopic --> Match["match-service"]
-    Match <--> Book[("In-memory order book")]
+    Intake --> OrdersTopic[["Kafka: orders.submitted"]]
+    OrdersTopic --> Match
+    Match <--> Book
     Match --> MySQL
     Match --> TradesTopic[["Kafka: trades.matched"]]
     TradesTopic --> Finance
 ```
 
-*Figure 2. Current Exchange Lab microservice configuration.*
-
-#### 8.3.6. Further Performance Iterations
-
-After the staged configurations are compared, the current correct configuration will be profiled. Further improvements will be selected from the measured bottleneck and applied one at a time before retesting.
+*Figure 5. C3 configuration with Redis-based reservation.*
 
 ### 8.4. Experimental Procedure
 
-Each experimental configuration will be evaluated using the following three-step procedure.
+Each configuration follows the same three-phase procedure:
 
-#### 8.4.1. Step 1: Prepare the Configuration
+```mermaid
+flowchart LR
+    A["Prepare configuration"] --> B["Run load test"]
+    B --> C["Verify and record result"]
+```
 
-1. Load the required configuration from its recorded Git commit or a separate experimental worktree.
-2. Build the application and start only the infrastructure required by that configuration.
-3. Reset MySQL, Kafka, and Redis state where applicable so that no earlier run affects the next result.
-4. Load the same trader accounts, stock positions, and initial sell orders from the controlled seed dataset.
-5. Start the application, confirm that every required component is healthy, and allow the JVM to warm up.
-6. Record the commit, configuration, hardware, JVM settings, and workload parameters used for the run.
+*Figure 6. Experimental procedure used for every configuration.*
 
-#### 8.4.2. Step 2: Execute the Benchmark
+#### Phase 1: Prepare the Configuration
 
-1. Start with a target request rate that the configuration is expected to sustain.
-2. Run the standard limit-buy-order workload for the fixed measurement period.
-3. Increase the target rate in predefined steps and repeat the same workload.
-4. Continue until completed TPS stops following the target rate or a sustainability condition fails.
-5. Repeat the tests around the observed boundary to identify the highest sustainable rate.
-6. For the current configuration, collect profiling evidence at the first bottleneck before selecting a further improvement.
+- Load the required configuration from its recorded Git commit or an isolated worktree, build it, and start its required components.
+- Reset MySQL, Kafka, and Redis where applicable, then load the same trader accounts, stock positions, and initial sell orders.
+- Confirm that the system is healthy, complete the fixed JVM warm-up, and record the environment and test settings.
 
-#### 8.4.3. Step 3: Validate and Record the Result
+#### Phase 2: Run the Load Test
 
-1. Stop generating new requests and allow asynchronous orders and trades to drain for the fixed drain period.
-2. Record completed TPS, stage TPS, latency, error rate, Kafka lag, unfinished work, and resource usage.
-3. Run the SQL verification checks for total cash, stock quantity, reservations, order states, and trade records.
-4. Mark the run as invalid if data is incorrect, errors exceed the defined limit, or backlog continues to grow.
-5. Repeat each important boundary test three times under the same conditions.
-6. Store the run configuration and measurements before testing the next system configuration.
+- Use k6 to submit the standard limit-buy-order workload at the planned target request rate.
+- Repeat the load test at each predefined request rate using the same measurement period.
+- Stop new requests, allow asynchronous work to drain for the fixed period, and collect the performance measurements.
+
+#### Phase 3: Verify and Record the Result
+
+- Use SQL checks to verify cash, stock, reservations, order states, and trade records. Discard the run if the data is incorrect or the system is unstable.
+- Repeat each selected test three times under the same conditions.
+- Store the verified setup and results for analysis.
 
 ### 8.5. Measurement and Data Analysis
+
+#### 8.5.1. Measurements
+
+The experiment distinguishes requests accepted by the system from transactions completed by the full workflow. In the controlled workload, each accepted buy order matches one unit from an existing sell order and therefore produces one trade and one settlement.
+
+| Measurement | Calculation or source | Use |
+|---|---|---|
+| Target TPS | Request rate configured in k6 | States the offered workload |
+| Accepted TPS | Accepted order counter divided by the measurement period | Shows how many requests entered the system |
+| Completed TPS | Completed settlement counter divided by the measurement period | Primary end-to-end performance result |
+| Completion ratio | Completed settlements divided by accepted orders | Shows whether accepted work was completed |
+| p95 latency, failed requests, and dropped iterations | k6 summary | Shows client-visible delay and load-generation failure |
+| Backlog | Gaps between stage counters and Kafka consumer lag where applicable | Shows whether unfinished work is accumulating |
+| CPU, memory, and JVM behaviour | System and application monitoring | Helps locate the active bottleneck |
+| Correctness | SQL checks of cash, stock, reservations, orders, and trades | Confirms that performance was not gained by producing invalid data |
+
+The completion counter will be read at the end of the measurement period before the drain wait. The drain-period reading will be recorded separately to show whether unfinished work remains; it will not be included in the completed TPS calculation.
+
+#### 8.5.2. Calculation and Comparison
+
+```text
+Completed TPS = completed settlements during measurement / measurement seconds
+
+Completion ratio = completed settlements / accepted orders x 100%
+
+TPS improvement = (new completed TPS - previous completed TPS) / previous completed TPS x 100%
+```
+
+A test rate is valid only when the SQL checks pass, no requests or k6 iterations fail, completed TPS keeps pace with accepted TPS, and backlog does not continue growing. Each selected test is repeated three times. The reported result for a configuration is the median completed TPS from the three valid runs at its highest valid tested rate. C0 to C3 are compared in order.
+
+#### 8.5.3. Result Summary
+
+The results will be recorded in a common format so that every configuration is judged using the same evidence.
+
+| Configuration | Highest valid target TPS | Median completed TPS | Supporting evidence | Change from previous configuration |
+|---|---:|---:|---|---:|
+| C0: Synchronous database baseline | To be measured | To be measured | p95, errors, backlog, resources, and SQL checks | Baseline |
+| C1: Kafka sequential processing | To be measured | To be measured | p95, errors, backlog, resources, and SQL checks | To be calculated |
+| C2: In-memory matching | To be measured | To be measured | p95, errors, backlog, resources, and SQL checks | To be calculated |
+| C3: Redis reservation | Preliminary: 110 | Preliminary: 110.03 from one run | p95 19.19 ms, 0% errors, zero lag, and SQL checks passed | Formal comparison pending |
+
+The preliminary C3 evidence shows that target rates of 100 and 110 TPS passed, while the system fell behind at 150 TPS. It therefore establishes 110 TPS as the highest clean rate tested so far, not the final capacity. Formal C0-C3 testing will use the procedure in Section 8.4 and the corrected measurement timing defined above.
 
 ### 8.6. Reliability, Validity, Ethics, and Limitations
 
@@ -223,7 +328,7 @@ The project is planned over six months, as shown in the Gantt chart below.
 
 ![Provisional six-month Gantt chart for the research plan](assets/research-plan-gantt.svg)
 
-*Figure 3. Provisional research plan. The schedule will be updated when the official project start and submission dates are confirmed.*
+*Figure 7. Provisional research plan. The schedule will be updated when the official project start and submission dates are confirmed.*
 
 ## 10. Summary
 

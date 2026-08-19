@@ -25,16 +25,7 @@
 >   - [8.1. Research Design](#81-research-design)
 >   - [8.2. Experimental System and Setup](#82-experimental-system-and-setup)
 >   - [8.3. Experimental Configurations](#83-experimental-configurations)
->     - [8.3.1. Synchronous Database Baseline](#831-synchronous-database-baseline)
->     - [8.3.2. Kafka-Based Sequential Processing](#832-kafka-based-sequential-processing)
->     - [8.3.3. In-Memory Order Matching](#833-in-memory-order-matching)
->     - [8.3.4. Redis-Based Reservation](#834-redis-based-reservation)
->     - [8.3.5. Microservice Configuration](#835-microservice-configuration)
->     - [8.3.6. Further Performance Iterations](#836-further-performance-iterations)
 >   - [8.4. Experimental Procedure](#84-experimental-procedure)
->     - [8.4.1. Step 1: Prepare the Configuration](#841-step-1-prepare-the-configuration)
->     - [8.4.2. Step 2: Execute the Benchmark](#842-step-2-execute-the-benchmark)
->     - [8.4.3. Step 3: Validate and Record the Result](#843-step-3-validate-and-record-the-result)
 >   - [8.5. Measurement and Data Analysis](#85-measurement-and-data-analysis)
 >   - [8.6. Reliability, Validity, Ethics, and Limitations](#86-reliability-validity-ethics-and-limitations)
 > - [9. Research Plan](#9-research-plan)
@@ -113,7 +104,7 @@ Include only when applicable:
 
 One-sentence problem statement:
 
-> Many areas of a high-concurrency Java microservice system can be improved to increase throughput. The problem is how to identify and apply the most effective improvements across the system to push sustainable completed TPS as high as possible.
+> Many areas of a high-concurrency Java transaction-processing system can be improved to increase throughput. The problem is how to identify and apply the most effective improvements across the system to push sustainable completed TPS as high as possible.
 
 Then explain:
 
@@ -140,7 +131,7 @@ Add a hypothesis only if the final research design requires one.
 
 Research aim:
 
-> To maximise the sustainable TPS of the selected Java microservice system.
+> To maximise the sustainable TPS of the selected Java transaction-processing system.
 
 ### 5.2. Research Objectives
 
@@ -155,9 +146,9 @@ Each objective must support the aim and correspond to at least one research ques
 
 ## 6. Scope of the Research
 
-This research focuses on improving the sustainable TPS of one selected Java microservice system. It will first establish the system's current TPS. Relevant performance techniques will then be applied and tested in the same environment. The study will determine the highest sustainable TPS achieved within the available project time and resources.
+This research focuses on improving the sustainable TPS of one selected Java transaction-processing system. It will first establish the system's current TPS. Relevant performance techniques will then be applied and tested in the same environment. The study will determine the highest sustainable TPS achieved within the available project time and resources.
 
-The work is limited to components available in the selected system and techniques that can be implemented during the project. The findings will explain what worked under the chosen workload and environment. They will not be treated as a universal configuration for every Java or microservice system.
+The work is limited to components available in the selected system and techniques that can be implemented during the project. The findings will explain what worked under the chosen workload and environment. They will not be treated as a universal configuration for every Java system.
 
 ## 7. Significance of the Research
 
@@ -169,57 +160,40 @@ The practical value is a clear record of the changes that worked in the selected
 
 ### 8.1. Research Design
 
-- Define the study as a quantitative experimental investigation of one Java microservice system.
-- Explain the iterative, measurement-driven approach used to increase sustainable completed TPS.
-- Identify the system configuration as the independent variable and sustainable completed TPS as the primary dependent variable.
+- First define the simplified stock-exchange backend simulator, its limit-order workflow, and its boundaries before introducing the name Exchange Lab.
+- Then explain the controlled quantitative design, the six sequential configurations, the fixed test conditions, the measurements, the validity rule, and why incremental comparison was selected.
 
 ### 8.2. Experimental System and Setup
 
-- Describe the common business workflow, infrastructure, hardware, software, seed data, workload, and measurement tools.
-- Explain which environmental and workload factors will remain constant across tests.
+- Briefly define the limit-order workflow used as the common experimental transaction.
+- Include one business-flow diagram showing submission, reservation, matching, trade recording, settlement, and completion.
+- Use one table for the fixed execution environment, platforms, test data, workload, and observation tools.
+- State that exact machine, JVM, load, and timing values will be fixed and recorded before formal testing.
 
 ### 8.3. Experimental Configurations
 
-#### 8.3.1. Synchronous Database Baseline
-
-#### 8.3.2. Kafka-Based Sequential Processing
-
-#### 8.3.3. In-Memory Order Matching
-
-#### 8.3.4. Redis-Based Reservation
-
-#### 8.3.5. Microservice Configuration
-
-#### 8.3.6. Further Performance Iterations
-
-- Use historical Git versions or separate experimental branches rather than destructively changing the current system.
+- Give C0, C1, C2, and C3 separate short explanations and Mermaid diagrams using a consistent layout.
+- Show synchronous MySQL processing in C0, Kafka in C1, in-memory matching in C2, and Redis reservation in C3.
+- Treat the application as one exchange system throughout.
+- Use historical Git versions or isolated worktrees rather than destructively changing the current system.
 
 ### 8.4. Experimental Procedure
 
-#### 8.4.1. Step 1: Prepare the Configuration
-
-- Load and build the version, reset its state, seed its data, start its dependencies, warm it up, and record its settings.
-
-#### 8.4.2. Step 2: Execute the Benchmark
-
-- Run the same workload at increasing target rates until the configuration no longer meets the sustainability conditions.
-
-#### 8.4.3. Step 3: Validate and Record the Result
-
-- Drain queued work, record all metrics, verify database correctness, repeat the boundary tests, and save the result.
+- Begin with one three-phase overview: prepare the configuration, run the load test, and verify and record the result. Do not add comparison or optimisation to this flow.
+- Under Phase 1, cover loading the version, resetting and seeding the data, health checks, warm-up, and recording the setup.
+- Under Phase 2, cover the k6 workload, increasing request rates, the sustainable boundary, the drain period, and performance collection.
+- Under Phase 3, cover SQL validation, rejection of invalid runs, three repeated tests under the same conditions, and result storage.
 
 ### 8.5. Measurement and Data Analysis
 
-- Use completed settlements per second as the primary end-to-end TPS metric.
-- Record intake, reservation, matching, and settlement TPS; latency; errors; backlog; resource use; and correctness.
-- Define the conditions that make a result sustainable.
-- Compare configurations using repeated measurements and percentage changes.
+- Use a measurement table covering target, accepted, and completed TPS; completion ratio; latency and errors; backlog; resource use; and SQL correctness.
+- State that completed TPS is calculated before the drain period and that post-drain counters are used only to identify unfinished work.
+- Provide the formulas for completed TPS, completion ratio, and percentage improvement.
+- Define a valid rate using correctness, failed requests or iterations, completed versus accepted TPS, backlog, and three repeated runs.
+- Use a C0-C3 result-summary table and label the existing C3 110 TPS result as preliminary rather than final.
 
 ### 8.6. Reliability, Validity, Ethics, and Limitations
 
-- Explain test repetition, controlled variables, reproducible configuration records, and database verification.
-- Address threats from the synthetic workload, local hardware, monitoring overhead, and the single-system scope.
-- Explain that the study uses no human participants or personal data.
 
 ## 9. Research Plan
 
@@ -227,7 +201,7 @@ The project is planned over six months, as shown in the Gantt chart below.
 
 ![Provisional six-month Gantt chart for the research plan](assets/research-plan-gantt.svg)
 
-*Figure 3. Provisional research plan. The schedule will be updated when the official project start and submission dates are confirmed.*
+*Figure 7. Provisional research plan. The schedule will be updated when the official project start and submission dates are confirmed.*
 
 ## 10. Summary
 
