@@ -6,29 +6,41 @@
 
 | Field | Value |
 |---|---|
-| Test date | Pending |
-| Machine and operating system | Pending |
-| Java and JVM settings | Pending |
-| Warm-up period | Pending |
-| Measurement period | Pending |
-| Drain period | Pending |
-| k6 script | Pending |
+| Test date | 19 August 2026 |
+| Machine and operating system | Windows 11 Enterprise 10.0.26200; AMD Ryzen 7 7800X3D; 16 logical processors; 31.1 GB RAM |
+| Java and JVM settings | OpenJDK 26.0.1; default JVM settings |
+| k6 version | 2.2.0 |
+| Warm-up period | 10 seconds at 5 TPS; discarded, then database reseeded |
+| Measurement period | 30 seconds per run |
+| Drain period | 0 seconds for synchronous C0 |
+| k6 script | `k6/02-tps-benchmark.js` |
 | Seed and verification files | `seed.sql` and `verify.sql` |
 
 ## 2. Configuration Versions
 
 | Configuration | Git commit | Main difference | Status |
 |---|---|---|---|
-| C0 | Pending | Synchronous processing with MySQL | Pending |
+| C0 | `567b63b` | Synchronous processing with MySQL | Tested |
 | C1 | Pending | Adds Kafka-based sequential processing | Pending |
 | C2 | Pending | Adds in-memory order matching | Pending |
 | C3 | Pending | Adds Redis reservation | Pending |
 
 ## 3. C0 Results
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+The initial ladder found a pass at 20 TPS and a failure at 40 TPS. The boundary was narrowed to 30 TPS and then 25 TPS using 5-TPS resolution. Three separate confirmation runs verified 25 TPS.
+
+| Test | Target TPS | Accepted TPS | Completed TPS | p95 latency | Request errors / dropped iterations | Unfinished work | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Ladder | 10 | 10.03 | 10.03 | 22.84 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Ladder | 20 | 20.00 | 20.00 | 22.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Ladder | 40 | 39.90 | 39.90 | 21.75 ms | 4 / 0 | 0 | 3/5 pass | Fail |
+| Boundary | 30 | 30.00 | 30.00 | 19.78 ms | 0 / 0 | 0 | 3/5 pass | Fail |
+| Boundary | 25 | 25.00 | 25.00 | 19.85 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Confirmation 1 | 25 | 25.00 | 25.00 | 21.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Confirmation 2 | 25 | 25.03 | 25.03 | 20.49 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Confirmation 3 | 25 | 25.03 | 25.03 | 22.07 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+
+The three confirmation runs produced a median completed throughput of **25.03 TPS** and a median p95 latency of **21.01 ms**. Because C0 is synchronous, each accepted response represents completed processing and no drain backlog exists.
 
 ## 4. C1 Results
 
@@ -52,7 +64,7 @@
 
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
-| C0 | Pending | Pending | Baseline | Pending |
+| C0 | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
 | C1 | Pending | Pending | Pending | Pending |
 | C2 | Pending | Pending | Pending | Pending |
 | C3 | Pending | Pending | Pending | Pending |
@@ -61,4 +73,6 @@
 
 | Configuration | Target TPS | Problem | Action |
 |---|---:|---|---|
-| Pending | Pending | Pending | Pending |
+| C0 | 5 TPS warm-up | Two request failures caused by MySQL deadlocks during cold start | Discarded as planned and reseeded before formal testing |
+| C0 | 40 TPS | Four requests failed and two conservation checks failed | Marked as failed; narrowed the boundary |
+| C0 | 30 TPS | All requests completed, but cash and stock conservation checks failed | Marked as failed; reduced the rate to 25 TPS |

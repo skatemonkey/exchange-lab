@@ -28,7 +28,7 @@ Each configuration must use a recorded Git commit and the same API, seed data, w
 
 3. Test smaller increments between the last pass and first failure, then repeat the highest passing rate three times.
 4. After every run, allow the fixed drain period, execute `verify.sql`, and reject any invalid run.
-5. Return to `v3` and record the verified result in [C0-C3 Load-Test Results](02-c0-c3-results.md).
+5. Record and commit the verified result on the configuration branch first. Then return to `v3` and copy the finalized result into [C0-C3 Load-Test Results](02-c0-c3-results.md).
 
 ## 4. Pass Rules
 
