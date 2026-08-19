@@ -295,11 +295,11 @@ Each result row represents one tested request rate. Formal values will be the me
 
 #### 8.5.1. C0 Synchronous Database Baseline
 
-This section will record the results of the synchronous MySQL configuration before Kafka, in-memory matching, or Redis reservation is added.
+The synchronous MySQL configuration was tested before Kafka, in-memory matching, or Redis reservation was added. Using 5-TPS boundary resolution, 25 TPS passed all three confirmation runs. The next tested rate, 30 TPS, completed every request but failed the cash and stock conservation checks.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+| 25 | 25.03 | 25.03 | 21.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 
 #### 8.5.2. C1 Kafka-Based Sequential Processing
 
@@ -331,7 +331,7 @@ The highest passing result from each configuration will be placed in the followi
 
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
-| C0: Synchronous database baseline | To be measured | To be measured | Baseline | To be recorded |
+| C0: Synchronous database baseline | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
 | C1: Kafka sequential processing | To be measured | To be measured | To be calculated | To be recorded |
 | C2: In-memory matching | To be measured | To be measured | To be calculated | To be recorded |
 | C3: Redis reservation | To be measured | To be measured | To be calculated | To be recorded |
