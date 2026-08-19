@@ -37,7 +37,7 @@ Many areas of a system can be improved to increase TPS, including the applicatio
 
 The selected experimental system is Exchange Lab, a backend system modelled on a stock exchange. It supports limit buy and sell orders, in which a trader specifies the stock symbol, quantity, and maximum buying price or minimum selling price. Processing an order may require the system to reserve the trader's cash or stock, match compatible orders by price and submission time, record the resulting trade, and settle the affected balances. The system is used as a transaction-processing testbed; the research does not attempt to reproduce every function of a commercial stock exchange.
 
-This research will measure the system's baseline TPS, identify the current bottleneck, apply an appropriate technique, and test the system again. The process will show how far sustainable completed TPS can be increased within the defined environment. Response time, errors, unfinished work, and resource usage will be monitored to ensure that a higher TPS remains stable and meaningful. The following sections explain the research background, problem, questions, aim, objectives, scope, and significance before presenting the methodology and research plan.
+This research will measure the system's baseline TPS, add Kafka, in-memory matching, and Redis reservation one at a time, and test the system after each change. The process will show how far sustainable completed TPS can be increased within the defined environment. Response time, errors, unfinished work, and correctness will be checked to ensure that a higher TPS remains stable and meaningful. The following sections explain the research background, problem, questions, aim, objectives, scope, and significance before presenting the methodology and research plan.
 
 ## 2. Research Background
 
@@ -55,7 +55,7 @@ Developers therefore have many possible techniques but limited guidance on which
 
 ### 2.3. How This Project Responds
 
-This project will use one Java transaction-processing system, a consistent workload, and the same measurements across all tests. It will establish the baseline, identify improvement opportunities, apply relevant techniques, and retest the system repeatedly. The purpose is to push sustainable completed TPS as high as possible while latency, errors, stability, unfinished work, and resource usage remain acceptable.
+This project will use one Java transaction-processing system, a consistent workload, and the same measurements across all tests. It will establish the baseline, add Kafka, in-memory matching, and Redis reservation separately, and retest the system after each change. The purpose is to determine how each technique affects sustainable completed TPS while latency, errors, unfinished work, and correctness remain acceptable.
 
 A change will be considered useful only when it increases sustainable TPS for the complete system. This keeps the project focused on the final result rather than the number or complexity of the techniques used.
 
@@ -67,7 +67,7 @@ The practical problem is not a shortage of performance techniques. It is determi
 
 Different parts of the system offer different opportunities for improvement. However, a technique that improves one system or workload may provide little benefit in another, and improving one area may change the behaviour of the remaining system. Each change must therefore be selected and measured according to its effect on completed end-to-end TPS (Henning & Hasselbring, 2024; Meijer et al., 2024).
 
-The study will follow a repeated cycle of measuring the baseline, locating the bottleneck, applying a suitable technique, and measuring again. Its primary outcome will be the highest sustainable completed TPS achieved within the test environment. Latency, errors, unfinished work, and resource usage will act as limits to ensure that the reported improvement remains stable and useful.
+The study will compare the synchronous baseline with configurations that add Kafka, in-memory matching, and Redis reservation one at a time. Its primary outcome will be the highest sustainable completed TPS achieved by each configuration. Latency, errors, unfinished work, and correctness will determine whether a reported improvement is valid.
 
 ## 4. Research Questions
 
@@ -110,7 +110,7 @@ The practical value is a clear record of the changes that worked in the selected
 
 This research uses a simplified stock-exchange backend simulator as the environment for evaluating concurrent transaction processing. The simulator models one core exchange workflow: receiving limit buy and sell orders, reserving cash or stock, matching compatible orders, recording trades, and settling completed transactions. It does not reproduce an entire real exchange or use real money, investors, or live market data. Instead, the trading workflow provides a realistic transaction scenario whose inputs, processing stages, and final records can be repeatedly measured and verified. This experimental system is referred to as Exchange Lab.
 
-The study uses a controlled quantitative design to determine how architectural changes affect sustainable completed transactions per second (TPS). Four system configurations are evaluated in sequence, beginning with a synchronous database baseline and then adding Kafka, in-memory matching, and Redis reservation. Every configuration performs the same limit-order transaction under the same machine, test data, workload pattern, and measurement conditions. Completed TPS is the main result, while latency, errors, backlog, and resource usage help explain that result. A configuration is valid only when its transactions are correct and it does not accumulate a continuously growing backlog. Comparing each configuration with its immediate predecessor makes the effect of each major technique clearer than testing only the final system.
+The study uses a controlled quantitative design to determine how architectural changes affect sustainable completed transactions per second (TPS). Four system configurations are evaluated in sequence, beginning with a synchronous database baseline and then adding Kafka, in-memory matching, and Redis reservation. Every configuration performs the same limit-order transaction under the same machine, test data, workload pattern, and measurement conditions. Completed TPS is the main result, while latency, errors, unfinished work, and correctness determine whether that result is valid. Comparing each configuration with its immediate predecessor makes the effect of each major technique clearer than testing only the final system.
 
 ### 8.2. Experimental System and Setup
 
@@ -278,47 +278,31 @@ flowchart LR
 
 ### 8.5. Measurement and Data Analysis
 
-#### 8.5.1. Measurements
+The experiment uses three TPS values. Target TPS is the request rate configured in k6. Accepted TPS is the number of orders accepted by the system per second. Completed TPS is the number of settlements completed per second and is the primary result. In this controlled workload, each accepted buy order produces one trade and one settlement.
 
-The experiment distinguishes requests accepted by the system from transactions completed by the full workflow. In the controlled workload, each accepted buy order matches one unit from an existing sell order and therefore produces one trade and one settlement.
+Each table row represents one tested request rate. Formal C0-C3 results will use the median values from three runs under the same conditions. The existing C3 rows are preliminary single-run evidence that will be replaced after formal testing.
 
-| Measurement | Calculation or source | Use |
-|---|---|---|
-| Target TPS | Request rate configured in k6 | States the offered workload |
-| Accepted TPS | Accepted order counter divided by the measurement period | Shows how many requests entered the system |
-| Completed TPS | Completed settlement counter divided by the measurement period | Primary end-to-end performance result |
-| Completion ratio | Completed settlements divided by accepted orders | Shows whether accepted work was completed |
-| p95 latency, failed requests, and dropped iterations | k6 summary | Shows client-visible delay and load-generation failure |
-| Backlog | Gaps between stage counters and Kafka consumer lag where applicable | Shows whether unfinished work is accumulating |
-| CPU, memory, and JVM behaviour | System and application monitoring | Helps locate the active bottleneck |
-| Correctness | SQL checks of cash, stock, reservations, orders, and trades | Confirms that performance was not gained by producing invalid data |
+| Configuration | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---|---:|---:|---:|---:|---|---|---|---|
+| C3 | 100 | 100.03 | 100.03 | 18.45 ms | 0% / none reported | 0 | Passed | Preliminary pass |
+| C3 | 110 | 110.03 | 110.03 | 19.19 ms | 0% / none reported | 0 | Passed | Preliminary pass |
+| C3 | 150 | 150.03 | 111.17 | 18.80 ms | 0% / none reported | Counter gap remained; Kafka lag was not captured | Not recorded | Preliminary fail |
+| C3 | 200 | 200.00 | 110.60 | 18.63 ms | 0% / none reported | Kafka lag: 1,988 | Not recorded | Preliminary fail |
+| C3 | 500 | 495.67 | approximately 226.73 | 116.84 ms | 0.06% / 122 | Kafka lag: 8,056 | Not recorded | Failed stress run |
 
-The completion counter will be read at the end of the measurement period before the drain wait. The drain-period reading will be recorded separately to show whether unfinished work remains; it will not be included in the completed TPS calculation.
+Completed TPS will be calculated from the settlement-counter increase recorded at the end of the measurement period, before the drain wait. The post-drain counter and Kafka lag are used only to record unfinished work.
 
-#### 8.5.2. Calculation and Comparison
+A tested rate passes only when:
+
+1. Completed TPS keeps pace with accepted TPS.
+2. No unfinished work continues to accumulate, and the fixed drain period clears the remaining work.
+3. No requests or k6 iterations fail, and all SQL correctness checks pass.
+
+The sustainable TPS of a configuration is the highest target rate for which all three repeated runs pass. After C0-C3 are tested, the improvement between consecutive configurations will be calculated as follows:
 
 ```text
-Completed TPS = completed settlements during measurement / measurement seconds
-
-Completion ratio = completed settlements / accepted orders x 100%
-
-TPS improvement = (new completed TPS - previous completed TPS) / previous completed TPS x 100%
+TPS improvement = (new sustainable TPS - previous sustainable TPS) / previous sustainable TPS x 100%
 ```
-
-A test rate is valid only when the SQL checks pass, no requests or k6 iterations fail, completed TPS keeps pace with accepted TPS, and backlog does not continue growing. Each selected test is repeated three times. The reported result for a configuration is the median completed TPS from the three valid runs at its highest valid tested rate. C0 to C3 are compared in order.
-
-#### 8.5.3. Result Summary
-
-The results will be recorded in a common format so that every configuration is judged using the same evidence.
-
-| Configuration | Highest valid target TPS | Median completed TPS | Supporting evidence | Change from previous configuration |
-|---|---:|---:|---|---:|
-| C0: Synchronous database baseline | To be measured | To be measured | p95, errors, backlog, resources, and SQL checks | Baseline |
-| C1: Kafka sequential processing | To be measured | To be measured | p95, errors, backlog, resources, and SQL checks | To be calculated |
-| C2: In-memory matching | To be measured | To be measured | p95, errors, backlog, resources, and SQL checks | To be calculated |
-| C3: Redis reservation | Preliminary: 110 | Preliminary: 110.03 from one run | p95 19.19 ms, 0% errors, zero lag, and SQL checks passed | Formal comparison pending |
-
-The preliminary C3 evidence shows that target rates of 100 and 110 TPS passed, while the system fell behind at 150 TPS. It therefore establishes 110 TPS as the highest clean rate tested so far, not the final capacity. Formal C0-C3 testing will use the procedure in Section 8.4 and the corrected measurement timing defined above.
 
 ### 8.6. Reliability, Validity, Ethics, and Limitations
 

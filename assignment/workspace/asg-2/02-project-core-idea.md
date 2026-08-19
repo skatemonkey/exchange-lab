@@ -17,7 +17,7 @@ Many areas of a high-concurrency Java transaction-processing system can be impro
 
 ## 3. Approach
 
-Study different performance techniques, measure the system, identify the current bottleneck, apply the relevant techniques, and test again. Repeat the process to keep increasing sustainable TPS. Use latency, errors, stability, and resource usage to confirm that the improvement is valid.
+Measure the baseline, add Kafka, in-memory matching, and Redis reservation one at a time, and test the system after each change. Use latency, errors, unfinished work, and correctness to confirm whether the completed TPS improvement is valid.
 
 ## 4. Dependency
 

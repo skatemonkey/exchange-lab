@@ -97,7 +97,7 @@ Include only when applicable:
 
 ### 2.3. How This Project Responds
 
-- Explain how the project will measure the baseline, identify improvement opportunities, apply relevant techniques, and retest repeatedly to increase sustainable completed TPS while checking latency, errors, stability, and resource usage.
+- Explain how the project will measure the baseline, add Kafka, in-memory matching, and Redis reservation one at a time, and retest while checking latency, errors, unfinished work, and correctness.
 - Connect the background directly to the Problem Statement.
 
 ## 3. Problem Statement
@@ -186,11 +186,11 @@ The practical value is a clear record of the changes that worked in the selected
 
 ### 8.5. Measurement and Data Analysis
 
-- Use a measurement table covering target, accepted, and completed TPS; completion ratio; latency and errors; backlog; resource use; and SQL correctness.
-- State that completed TPS is calculated before the drain period and that post-drain counters are used only to identify unfinished work.
-- Provide the formulas for completed TPS, completion ratio, and percentage improvement.
-- Define a valid rate using correctness, failed requests or iterations, completed versus accepted TPS, backlog, and three repeated runs.
-- Use a C0-C3 result-summary table and label the existing C3 110 TPS result as preliminary rather than final.
+- Define target TPS, accepted TPS, and completed TPS briefly.
+- Use one results table containing configuration, target TPS, accepted TPS, completed TPS, p95 latency, errors and dropped iterations, unfinished work, SQL checks, and the decision.
+- State that each row represents one tested request rate and that formal values are medians from three repeated runs.
+- Include the existing C3 runs as preliminary evidence and state that they will be replaced after formal testing.
+- Define the three pass conditions and provide only the percentage-improvement formula.
 
 ### 8.6. Reliability, Validity, Ethics, and Limitations
 
