@@ -17,10 +17,21 @@
 > - [6. Scope of the Research](#6-scope-of-the-research)
 > - [7. Significance of the Research](#7-significance-of-the-research)
 > - [8. Research Methodology](#8-research-methodology)
->   - [8.1. Experimental Setup](#81-experimental-setup)
->   - [8.2. Experimental Procedure](#82-experimental-procedure)
->   - [8.3. Measurement and Evaluation](#83-measurement-and-evaluation)
->   - [8.4. Reliability and Limitations](#84-reliability-and-limitations)
+>   - [8.1. Research Design](#81-research-design)
+>   - [8.2. Experimental System and Setup](#82-experimental-system-and-setup)
+>   - [8.3. Experimental Configurations](#83-experimental-configurations)
+>     - [8.3.1. Synchronous Database Baseline](#831-synchronous-database-baseline)
+>     - [8.3.2. Kafka-Based Sequential Processing](#832-kafka-based-sequential-processing)
+>     - [8.3.3. In-Memory Order Matching](#833-in-memory-order-matching)
+>     - [8.3.4. Redis-Based Reservation](#834-redis-based-reservation)
+>     - [8.3.5. Microservice Configuration](#835-microservice-configuration)
+>     - [8.3.6. Further Performance Iterations](#836-further-performance-iterations)
+>   - [8.4. Experimental Procedure](#84-experimental-procedure)
+>     - [8.4.1. Step 1: Prepare the Configuration](#841-step-1-prepare-the-configuration)
+>     - [8.4.2. Step 2: Execute the Benchmark](#842-step-2-execute-the-benchmark)
+>     - [8.4.3. Step 3: Validate and Record the Result](#843-step-3-validate-and-record-the-result)
+>   - [8.5. Measurement and Data Analysis](#85-measurement-and-data-analysis)
+>   - [8.6. Reliability, Validity, Ethics, and Limitations](#86-reliability-validity-ethics-and-limitations)
 > - [9. Research Plan](#9-research-plan)
 > - [10. Summary](#10-summary)
 > - [11. References](#11-references)
@@ -32,6 +43,8 @@
 Modern software systems often need to handle many requests at the same time. When demand increases, the system may become slow, return errors, or stop processing work reliably. Achieving high concurrency therefore means more than accepting a large number of requests. The system must complete a high volume of transactions consistently and continue doing so under sustained demand.
 
 Many areas of a system can be improved to increase TPS, including the application, database, cache, messaging service, network, and use of computing resources. Each area offers different performance techniques, but their value depends on the system and workload. These techniques are tools for increasing TPS; they are not the final goal. Although this project will evaluate a Java microservice system, the general improvement approach may also be useful for systems developed with other languages and technologies. The experimental findings will remain limited to the selected Java system.
+
+The selected experimental system is Exchange Lab, a backend system modelled on a stock exchange. It supports limit buy and sell orders, in which a trader specifies the stock symbol, quantity, and maximum buying price or minimum selling price. Processing an order may require the system to reserve the trader's cash or stock, match compatible orders by price and submission time, record the resulting trade, and settle the affected balances. The system is used as a transaction-processing testbed; the research does not attempt to reproduce every function of a commercial stock exchange.
 
 This research will measure the system's baseline TPS, identify the current bottleneck, apply an appropriate technique, and test the system again. The process will show how far sustainable completed TPS can be increased within the defined environment. Response time, errors, unfinished work, and resource usage will be monitored to ensure that a higher TPS remains stable and meaningful. The following sections explain the research background, problem, questions, aim, objectives, scope, and significance before presenting the methodology and research plan.
 
@@ -102,13 +115,107 @@ The practical value is a clear record of the changes that worked in the selected
 
 ## 8. Research Methodology
 
-### 8.1. Experimental Setup
+### 8.1. Research Design
 
-### 8.2. Experimental Procedure
+This study adopts a quantitative experimental design to investigate how different performance techniques affect the sustainable completed TPS of the selected Java microservice system. The unit of analysis is the end-to-end processing of a limit order, beginning when the order is submitted and ending when the resulting trade settlement is completed. Controlled experiments will compare versioned system configurations under the same workload and test environment.
 
-### 8.3. Measurement and Evaluation
+The initial comparison will begin with the basic synchronous database implementation. Later configurations will introduce Kafka-based processing, in-memory order matching, Redis-based reservation, and the current microservice implementation in controlled stages. After these foundational configurations have been evaluated, the current correct implementation will become the baseline for further optimisation. Measurements and profiling will be used to identify its active bottleneck. One relevant improvement will then be applied before the same test is repeated. This measure, identify, improve, and retest cycle will continue while feasible changes produce valid end-to-end gains.
 
-### 8.4. Reliability and Limitations
+The independent variable is the system configuration or performance technique applied during each experiment. The primary dependent variable is sustainable completed TPS. Latency, error rate, unfinished work, resource usage, and data correctness will be used as supporting measures. Hardware, seed data, workload, request rate, test duration, warm-up, and drain conditions will be controlled when configurations are compared. A configuration will not be treated as an improvement when it raises apparent throughput by allowing errors, incorrect financial data, or continuously growing backlog. This design supports the measurement of the initial system in RQ1, the comparison of applied techniques in RQ2, and the determination of the highest sustainable TPS in RQ3.
+
+### 8.2. Experimental System and Setup
+
+The experimental testbed is Exchange Lab, a Java and Spring Boot backend for processing stock limit orders. Its business scope is intentionally narrow so that one complete transaction path can be tested repeatedly. A request submits a buy or sell order containing a trader identifier, stock symbol, limit price, and quantity. Processing includes validating the order, reserving cash or stock, matching compatible orders by price-time priority, recording any trade, and settling the affected balances. A transaction is considered complete when settlement finishes successfully.
+
+All configurations will be tested on the same hardware with the same seed data, workload, test duration, and measurement procedure. MySQL 8.4 provides durable data storage, while Kafka 4.1.0 and Redis 7.4 are introduced only in the configurations that require them. Docker Compose will provide repeatable infrastructure. k6 will generate the workload, Micrometer and Spring Boot Actuator will record stage counters, and Kafka lag, JVM and operating-system measurements, and SQL verification queries will provide additional performance and correctness evidence. Exact hardware, software, JVM, and workload settings will be recorded before the formal experiments.
+
+### 8.3. Experimental Configurations
+
+The experiment will compare the following staged configurations. Each stage introduces one major architectural technique while retaining the same limit-order workload and evaluation rules.
+
+#### 8.3.1. Synchronous Database Baseline
+
+The baseline uses one Java application and MySQL. A request performs reservation, database-based matching, trade recording, and settlement synchronously before returning a response.
+
+```mermaid
+flowchart LR
+    Client["k6 / Order Client"] -->|Submit limit order| Application["Synchronous Java application<br/>Reserve, match, record, and settle"]
+    Application <--> MySQL[("MySQL")]
+    Application -->|Completed response| Client
+```
+
+*Figure 1. Synchronous database baseline.*
+
+#### 8.3.2. Kafka-Based Sequential Processing
+
+Kafka is introduced between order intake and matching. The API accepts and queues the order, while one consumer processes matching sequentially to prevent concurrent requests from modifying the same resting order.
+
+#### 8.3.3. In-Memory Order Matching
+
+The active order book is moved from repeated database queries into an in-memory price-time structure. MySQL remains the durable store for orders and trades.
+
+#### 8.3.4. Redis-Based Reservation
+
+Redis is introduced for atomic cash and stock availability checks before accepted orders are published to Kafka. MySQL continues to hold the durable financial records.
+
+#### 8.3.5. Microservice Configuration
+
+The application is divided into exchange, match, and finance services. The exchange service accepts orders, the match service owns the in-memory order book, and the finance service performs reservation and settlement.
+
+```mermaid
+flowchart LR
+    Client["k6 / Order Client"] -->|Submit limit order| Exchange["exchange-service"]
+    Exchange -->|Reserve cash or stock| Finance["finance-service"]
+    Finance --> Redis[("Redis")]
+    Finance --> MySQL[("MySQL")]
+    Exchange --> OrdersTopic[["Kafka: orders.submitted"]]
+    OrdersTopic --> Match["match-service"]
+    Match <--> Book[("In-memory order book")]
+    Match --> MySQL
+    Match --> TradesTopic[["Kafka: trades.matched"]]
+    TradesTopic --> Finance
+```
+
+*Figure 2. Current Exchange Lab microservice configuration.*
+
+#### 8.3.6. Further Performance Iterations
+
+After the staged configurations are compared, the current correct configuration will be profiled. Further improvements will be selected from the measured bottleneck and applied one at a time before retesting.
+
+### 8.4. Experimental Procedure
+
+Each experimental configuration will be evaluated using the following three-step procedure.
+
+#### 8.4.1. Step 1: Prepare the Configuration
+
+1. Load the required configuration from its recorded Git commit or a separate experimental worktree.
+2. Build the application and start only the infrastructure required by that configuration.
+3. Reset MySQL, Kafka, and Redis state where applicable so that no earlier run affects the next result.
+4. Load the same trader accounts, stock positions, and initial sell orders from the controlled seed dataset.
+5. Start the application, confirm that every required component is healthy, and allow the JVM to warm up.
+6. Record the commit, configuration, hardware, JVM settings, and workload parameters used for the run.
+
+#### 8.4.2. Step 2: Execute the Benchmark
+
+1. Start with a target request rate that the configuration is expected to sustain.
+2. Run the standard limit-buy-order workload for the fixed measurement period.
+3. Increase the target rate in predefined steps and repeat the same workload.
+4. Continue until completed TPS stops following the target rate or a sustainability condition fails.
+5. Repeat the tests around the observed boundary to identify the highest sustainable rate.
+6. For the current configuration, collect profiling evidence at the first bottleneck before selecting a further improvement.
+
+#### 8.4.3. Step 3: Validate and Record the Result
+
+1. Stop generating new requests and allow asynchronous orders and trades to drain for the fixed drain period.
+2. Record completed TPS, stage TPS, latency, error rate, Kafka lag, unfinished work, and resource usage.
+3. Run the SQL verification checks for total cash, stock quantity, reservations, order states, and trade records.
+4. Mark the run as invalid if data is incorrect, errors exceed the defined limit, or backlog continues to grow.
+5. Repeat each important boundary test three times under the same conditions.
+6. Store the run configuration and measurements before testing the next system configuration.
+
+### 8.5. Measurement and Data Analysis
+
+### 8.6. Reliability, Validity, Ethics, and Limitations
 
 ## 9. Research Plan
 
@@ -116,7 +223,7 @@ The project is planned over six months, as shown in the Gantt chart below.
 
 ![Provisional six-month Gantt chart for the research plan](assets/research-plan-gantt.svg)
 
-*Figure 1. Provisional research plan. The schedule will be updated when the official project start and submission dates are confirmed.*
+*Figure 3. Provisional research plan. The schedule will be updated when the official project start and submission dates are confirmed.*
 
 ## 10. Summary
 
