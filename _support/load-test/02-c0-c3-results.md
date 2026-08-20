@@ -45,7 +45,22 @@ The three confirmation runs produced a median completed throughput of **25.03 TP
 
 ## 4. C1 Results
 
-The rate search found that 65 TPS was not repeatable, so 60 TPS was tested three times for confirmation.
+### Rate Search
+
+The initial rates located the processing limit, and smaller steps narrowed it. The first 65 TPS run reached the minimum 98% completion rule, but its confirmation fell below that rule. Therefore, 65 TPS was rejected and 60 TPS became the highest verified target.
+
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Initial rate | 10 | 10.00 | 10.00 | 100.00% | 8.14 ms | 0 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+| Initial rate | 20 | 20.03 | 20.00 | 99.83% | 7.48 ms | 1 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+| Initial rate | 40 | 40.03 | 40.00 | 99.92% | 6.75 ms | 1 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+| Initial rate | 80 | 80.00 | 64.27 | 80.33% | 6.40 ms | 327 | 145 | 205 | 0 / 0 | 5/5 pass | Fail |
+| Smaller step | 60 | 60.03 | 59.80 | 99.61% | 6.38 ms | 7 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+| Smaller step | 70 | 70.00 | 64.37 | 91.95% | 6.33 ms | 169 | 0 | 0 | 0 / 0 | 5/5 pass | Fail |
+| Smaller step | 65 | 65.00 | 63.70 | 98.00% | 6.35 ms | 39 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+| 65 TPS confirmation | 65 | 65.00 | 63.47 | 97.64% | 6.40 ms | 46 | 0 | 0 | 0 / 0 | 5/5 pass | Fail |
+
+### 60 TPS Confirmation
 
 | Run | Target TPS | Accepted TPS | Completed TPS | p95 latency | Completed during drain | Unfinished work / Kafka lag | Errors / dropped iterations | SQL checks | Decision |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|
