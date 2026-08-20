@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title description">
-  <title id="title">Provisional six-month research plan</title>
-  <desc id="description">A Gantt chart showing literature updates, system preparation, baseline TPS measurement, technique selection, improvement implementation and testing, final TPS evaluation, report writing, and submission across six months.</desc>
+  <title id="title">Six-week research plan</title>
+  <desc id="description">A Gantt chart showing literature updates, system preparation, baseline TPS measurement, technique selection, improvement implementation and testing, final TPS evaluation, report writing, and submission across six weeks.</desc>
 
   <rect width="1280" height="640" fill="#ffffff"/>
 
-  <text x="40" y="44" fill="#173647" font-family="Arial, sans-serif" font-size="28" font-weight="600">Provisional Research Plan</text>
-  <text x="40" y="72" fill="#526b78" font-family="Arial, sans-serif" font-size="16">Relative six-month schedule</text>
+  <text x="40" y="44" fill="#173647" font-family="Arial, sans-serif" font-size="28" font-weight="600">Six-Week Research Plan</text>
+  <text x="40" y="72" fill="#526b78" font-family="Arial, sans-serif" font-size="16">Week 1 to Week 6</text>
 
   <rect x="40" y="100" width="1188" height="48" rx="4" fill="#e8f1f5"/>
   <text x="58" y="131" fill="#173647" font-family="Arial, sans-serif" font-size="17" font-weight="600">Activity</text>
-  <text x="414" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Month 1</text>
-  <text x="562" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Month 2</text>
-  <text x="710" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Month 3</text>
-  <text x="858" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Month 4</text>
-  <text x="1006" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Month 5</text>
-  <text x="1154" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Month 6</text>
+  <text x="414" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Week 1</text>
+  <text x="562" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Week 2</text>
+  <text x="710" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Week 3</text>
+  <text x="858" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Week 4</text>
+  <text x="1006" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Week 5</text>
+  <text x="1154" y="131" text-anchor="middle" fill="#173647" font-family="Arial, sans-serif" font-size="16" font-weight="600">Week 6</text>
 
   <rect x="40" y="148" width="1188" height="52" fill="#ffffff"/>
   <rect x="40" y="200" width="1188" height="52" fill="#f7fafb"/>
