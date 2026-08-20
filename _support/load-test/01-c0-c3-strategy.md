@@ -17,7 +17,7 @@ Each configuration must use a recorded Git commit and the same API, seed data, w
 
 ## 3. Test Process
 
-1. Switch to the configuration branch and start its Docker Compose infrastructure. Before every measured rate, stop every application process, confirm zero Kafka lag where applicable, reset and seed MySQL, and flush Redis for C3.
+1. Switch to the configuration branch and start its Docker Compose infrastructure. Keep MySQL and Kafka running between measured rates. Before every rate, stop every application process, confirm zero Kafka lag where applicable, reset and seed MySQL, and flush Redis for C3.
 2. Start the single C0 application or, for C1-C3, start `finance-service`, `match-service`, and `exchange-service` in that order. C3 preloads Redis during finance startup, while C2 and C3 rebuild the in-memory order book during match startup. Confirm every required health endpoint before testing. Never reuse any application process between measured rates.
 3. Run `02-tps-benchmark.js` at `10`, `20`, `40`, `80`, `160` TPS until the first failure:
 
@@ -27,7 +27,7 @@ Each configuration must use a recorded Git commit and the same API, seed data, w
 
    For C0, add `-e METRICS_MODE=sync -e DRAIN_SECONDS=0` because every accepted response has already completed processing.
 
-4. Test smaller increments between the last pass and first failure, then repeat the highest passing rate three times. Apply the complete stop, reset, restart, and readiness sequence before every repetition.
+4. Test smaller increments between the last pass and first failure, then repeat the highest passing rate twice. Apply the complete stop, reset, restart, and readiness sequence before every repetition.
 5. After every run, allow the fixed drain period and execute `verify.sql`. For C3, also execute `verify-redis.ps1` to compare Redis availability with MySQL. Reject any invalid run.
 6. Record and commit the verified result on the configuration branch first. Then return to `v3` and copy the finalized result into [C0-C3 Load-Test Results](02-c0-c3-results.md).
 
