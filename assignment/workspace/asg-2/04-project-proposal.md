@@ -313,11 +313,11 @@ Kafka-based sequential processing increased the verified target from 25 TPS to 6
 
 #### 8.5.3. C2 In-Memory Order Matching
 
-This section will record the results after the in-memory order book is added to C1.
+Adding the in-memory order book to C1 produced a verified target of 50 TPS. All three 50 TPS confirmation runs passed, while 55 TPS failed because completed processing did not keep pace with accepted orders.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+| 50 | 50.00 | 49.97 | 7.06 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 
 #### 8.5.4. C3 Redis-Based Reservation
 
@@ -329,13 +329,13 @@ This section will record the results after Redis reservation is added to C2.
 
 #### 8.5.5. Overall Comparison
 
-The highest passing result from each configuration will be placed in the following table after formal testing.
+The table compares the highest verified result currently available for each configuration.
 
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
 | C0: Synchronous database baseline | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
 | C1: Kafka sequential processing | 60 | 59.80 | +140% | Kafka increased intake capacity, while database processing remained sequential |
-| C2: In-memory matching | To be measured | To be measured | To be calculated | To be recorded |
+| C2: In-memory matching | 50 | 49.97 | -16.7% | In-memory matching did not improve end-to-end capacity in this implementation |
 | C3: Redis reservation | To be measured | To be measured | To be calculated | To be recorded |
 
 The improvement between consecutive configurations will be calculated as follows:

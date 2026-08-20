@@ -17,7 +17,7 @@ Each configuration must use a recorded Git commit and the same API, seed data, w
 
 ## 3. Test Process
 
-1. Switch to the configuration branch, start its Docker Compose services and application, then reset and seed MySQL.
+1. Switch to the configuration branch, start its Docker Compose services, reset and seed MySQL, then start the application. For C2 and C3, restart the application after every reseed so the in-memory order book is rebuilt from the new data.
 2. Run `02-tps-benchmark.js` at `10`, `20`, `40`, `80`, `160` TPS until the first failure:
 
    ```powershell
