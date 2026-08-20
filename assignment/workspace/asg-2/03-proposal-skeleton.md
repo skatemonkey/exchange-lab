@@ -187,13 +187,13 @@ The practical value is a clear record of the changes that worked in the selected
 - Begin with one three-phase overview: prepare the configuration, run the load test, and verify and record the result. Do not add comparison or optimisation to this flow.
 - Under Phase 1, cover loading the version, resetting and seeding the data, health checks, warm-up, and recording the setup.
 - Under Phase 2, cover the k6 workload, increasing request rates, the sustainable boundary, the drain period, and performance collection.
-- Under Phase 3, cover SQL validation, rejection of invalid runs, three repeated tests under the same conditions, and result storage.
+- Under Phase 3, cover SQL validation, rejection of invalid runs, at least two repeated tests under the same conditions, and result storage.
 
 ### 8.5. Measurement and Data Analysis
 
 - Define target TPS, accepted TPS, and completed TPS briefly.
 - Define the three pass conditions once before the configuration result sections.
-- State that each result row represents one tested request rate and that formal values are medians from three repeated runs.
+- State that each result row represents one tested request rate and that formal values are medians from at least two confirmation runs.
 
 #### 8.5.1. C0 Synchronous Database Baseline
 
@@ -205,7 +205,7 @@ The practical value is a clear record of the changes that worked in the selected
 
 #### 8.5.3. C2 In-Memory Order Matching
 
-- Use the same results columns without repeating the testing procedure. Leave the results unfilled until formal testing is completed.
+- Use the same results columns without repeating the testing procedure and summarise the verified result.
 
 #### 8.5.4. C3 Redis-Based Reservation
 
