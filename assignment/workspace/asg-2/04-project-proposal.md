@@ -36,11 +36,11 @@
 
 Modern software systems often need to handle many requests at the same time. When demand increases, the system may become slow, return errors, or stop processing work reliably. Achieving high concurrency therefore means more than accepting a large number of requests. The system must complete a high volume of transactions consistently and continue doing so under sustained demand.
 
-Many areas of a system can be improved to increase TPS, including the application, database, cache, messaging service, network, and use of computing resources. Each area offers different performance techniques, but their value depends on the system and workload. These techniques are tools for increasing TPS; they are not the final goal. Although this project will evaluate one Java transaction-processing system, the general improvement approach may also be useful for systems developed with other languages and technologies. The experimental findings will remain limited to the selected system.
+Many areas of a system can be improved to increase TPS, including the application, database, cache, messaging service, network, and use of computing resources. Each area offers different performance techniques, but their value depends on the system and workload. These techniques are tools for increasing TPS; they are not the final goal. Although this project evaluates one Java transaction-processing system, the general improvement approach may also be useful for systems developed with other languages and technologies. The experimental findings remain limited to the selected system.
 
 The selected experimental system is Exchange Lab, a backend system modelled on a stock exchange. It supports limit buy and sell orders, in which a trader specifies the stock symbol, quantity, and maximum buying price or minimum selling price. Processing an order may require the system to reserve the trader's cash or stock, match compatible orders by price and submission time, record the resulting trade, and settle the affected balances. The system is used as a transaction-processing testbed; the research does not attempt to reproduce every function of a commercial stock exchange.
 
-This research will measure the system's baseline TPS, add Kafka, in-memory matching, and Redis reservation one at a time, and test the system after each change. The process will show how far sustainable completed TPS can be increased within the defined environment. Response time, errors, unfinished work, and correctness will be checked to ensure that a higher TPS remains stable and meaningful. The following sections explain the research background, problem, questions, aim, objectives, scope, and significance before presenting the methodology and research plan.
+This research measures the system's baseline TPS and evaluates Kafka, in-memory matching, and Redis reservation one at a time. Each configuration is tested using the same workload and pass rules to show how far sustainable completed TPS increases within the defined environment. Response time, errors, unfinished work, and correctness ensure that a higher TPS remains stable and meaningful. The following sections explain the research background, problem, questions, aim, objectives, scope, and significance before presenting the methodology, results, and research plan.
 
 ## 2. Research Background
 
@@ -54,13 +54,13 @@ These findings also show why a technique cannot be judged by its description alo
 
 Existing studies use different applications, environments, workloads, test durations, and performance measurements. Many evaluate one component in isolation and report a local improvement without showing the effect on the complete request path. An improvement may therefore move the bottleneck instead of increasing completed end-to-end throughput (Meijer et al., 2024). The available evidence does not clearly show how far sustainable completed TPS can be increased when relevant improvements are selected from system measurements and applied iteratively across the same Java transaction-processing system under consistent conditions.
 
-Developers therefore have many possible techniques but limited guidance on which ones will produce the largest gain in a particular system. A controlled end-to-end test is needed to connect each applied change to a measurable difference in TPS.
+Developers therefore have many possible techniques but limited guidance on which ones produce the largest gain in a particular system. A controlled end-to-end test is needed to connect each applied change to a measurable difference in TPS.
 
 ### 2.3. How This Project Responds
 
-This project will use one Java transaction-processing system, a consistent workload, and the same measurements across all tests. It will establish the baseline, add Kafka, in-memory matching, and Redis reservation separately, and retest the system after each change. The purpose is to determine how each technique affects sustainable completed TPS while latency, errors, unfinished work, and correctness remain acceptable.
+This project uses one Java transaction-processing system, a consistent workload, and the same measurements across all tests. It establishes the baseline, adds Kafka, in-memory matching, and Redis reservation separately, and retests the system after each change. The purpose is to determine how each technique affects sustainable completed TPS while latency, errors, unfinished work, and correctness remain acceptable.
 
-A change will be considered useful only when it increases sustainable TPS for the complete system. This keeps the project focused on the final result rather than the number or complexity of the techniques used.
+A change is considered useful only when it increases sustainable TPS for the complete system. This keeps the project focused on the final result rather than the number or complexity of the techniques used.
 
 ## 3. Problem Statement
 
@@ -70,11 +70,11 @@ The practical problem is not a shortage of performance techniques. It is determi
 
 Different parts of the system offer different opportunities for improvement. However, a technique that improves one system or workload may provide little benefit in another, and improving one area may change the behaviour of the remaining system. Each change must therefore be selected and measured according to its effect on completed end-to-end TPS (Henning & Hasselbring, 2024; Meijer et al., 2024).
 
-The study will compare the synchronous baseline with configurations that add Kafka, in-memory matching, and Redis reservation one at a time. Its primary outcome will be the highest sustainable completed TPS achieved by each configuration. Latency, errors, unfinished work, and correctness will determine whether a reported improvement is valid.
+The study compares the synchronous baseline with configurations that add Kafka, in-memory matching, and Redis reservation one at a time. Its primary outcome is the highest sustainable completed TPS achieved by each configuration. Latency, errors, unfinished work, and correctness determine whether a reported improvement is valid.
 
 ## 4. Research Questions
 
-The study will address the following research questions:
+The study addresses the following research questions:
 
 1. RQ1: What TPS can the current system sustain before any improvements?
 2. RQ2: Which applied techniques increase sustainable TPS, and by how much?
@@ -97,13 +97,13 @@ The research objectives are:
 
 ## 6. Scope of the Research
 
-This research focuses on improving the sustainable TPS of one selected Java transaction-processing system. It will first establish the system's current TPS. Relevant performance techniques will then be applied and tested in the same environment. The study will determine the highest sustainable TPS achieved within the available project time and resources.
+This research focuses on improving the sustainable TPS of one selected Java transaction-processing system. It establishes the system's baseline TPS, then applies and tests relevant performance techniques in the same environment. The study determines the highest sustainable TPS achieved within the available project time and resources.
 
-The work is limited to components available in the selected system and techniques that can be implemented during the project. The findings will explain what worked under the chosen workload and environment. They will not be treated as a universal configuration for every Java system.
+The work is limited to components available in the selected system and techniques implemented during the project. The findings explain what worked under the chosen workload and environment. They are not treated as a universal configuration for every Java system.
 
 ## 7. Significance of the Research
 
-This research matters because a system that sustains a higher TPS can complete more transactions during heavy demand. Measuring the complete system will show whether an improvement produces a real end-to-end gain rather than only making one component faster (Henning & Hasselbring, 2024; Meijer et al., 2024). The final result will show how far TPS was increased and the conditions under which that increase remained sustainable.
+This research matters because a system that sustains a higher TPS can complete more transactions during heavy demand. Measuring the complete system shows whether an improvement produces a real end-to-end gain rather than only making one component faster (Henning & Hasselbring, 2024; Meijer et al., 2024). The final result shows how far TPS increased and the conditions under which that increase remained sustainable.
 
 The practical value is a clear record of the changes that worked in the selected system. Developers can adapt the same measurement-based process when improving similar systems. The research also extends the Assignment 1 literature review by testing relevant techniques in a working system and producing experimental evidence.
 
@@ -134,14 +134,16 @@ The internal implementation changes between configurations, but the input, requi
 
 | Item | Common experimental setup |
 |---|---|
-| Execution environment | The same computer, operating system, Java 26 runtime, and JVM settings |
+| Execution environment | Windows 11 Enterprise; AMD Ryzen 7 7800X3D; 31.1 GB RAM; OpenJDK 26.0.1 with default JVM settings |
 | Durable data | MySQL 8.4 |
 | Supporting platforms | Kafka 4.1.0 and Redis 7.4 only when required by the configuration |
 | Test data | The same trader accounts, stock positions, and initial sell orders |
 | Workload | The same k6 limit-buy-order workload and controlled request-rate pattern |
-| Observation | Application and system metrics, Kafka lag where applicable, and SQL correctness checks |
+| Measurement window | 30 seconds, followed by a 5-second drain for C1-C3 |
+| Readiness | Fresh application processes; health checks and Kafka partition assignments confirmed before testing |
+| Observation | Accepted and completed TPS, API latency, errors, dropped iterations, unfinished work, Kafka lag, and SQL/Redis correctness checks |
 
-The exact machine specifications, JVM settings, request rates, and warm-up, measurement, and drain periods will be fixed and recorded before formal testing.
+These environment, workload, readiness, measurement, and verification conditions remain fixed across the compared configurations.
 
 ### 8.3. Experimental Configurations
 
@@ -264,12 +266,12 @@ flowchart LR
 #### Phase 1: Prepare the Configuration
 
 - Load the required configuration from its recorded Git commit or an isolated worktree and start its required infrastructure.
-- Keep MySQL and Kafka running between measured rates. Before every rate, stop the active application process or processes, confirm zero Kafka lag where applicable, reset MySQL and Redis where applicable, and load the same seed data.
-- Start the single C0 application or, for C1-C3, start finance, match, and exchange services in that order. Confirm the required health endpoints, in-memory order book, and C3 Redis preload before k6 starts. Do not reuse any application process between measured rates.
+- Keep MySQL and Kafka running between measured rates. Before every rate, stop the active application processes, wait until the old Kafka consumers have left their groups, confirm zero Kafka lag, reset MySQL and Redis where applicable, and load the same seed data.
+- Start the single C0 application or, for C1-C3, start finance, match, and exchange services. Health endpoints alone do not prove Kafka readiness, so both new consumer groups must own their partitions with zero lag before the fixed readiness delay and k6 begin. Do not reuse any application process between measured rates.
 
 #### Phase 2: Run the Load Test
 
-- Use k6 to submit the standard limit-buy-order workload at the planned target request rate.
+- Use k6 to submit the standard limit-buy-order workload at the selected target request rate.
 - Repeat the load test at each predefined request rate using the same measurement period.
 - Stop new requests, allow asynchronous work to drain for the fixed period, and collect the performance measurements.
 
@@ -281,9 +283,9 @@ flowchart LR
 
 ### 8.5. Measurement and Data Analysis
 
-The experiment uses three TPS values. Target TPS is the request rate configured in k6. Accepted TPS is the number of orders accepted by the system per second. Completed TPS is the number of settlements completed per second and is the primary result. In this controlled workload, each accepted buy order produces one trade and one settlement.
+The experiment uses three TPS measures. Target TPS is the request rate configured in k6. Accepted TPS is the number of orders accepted by the system per second. Completed TPS is the number of settlements completed per second and is the primary result. In this controlled workload, each accepted buy order produces one trade and one settlement.
 
-Completed TPS will be calculated from the settlement-counter increase recorded at the end of the measurement period, before the drain wait. The post-drain counter and Kafka lag are used only to record unfinished work.
+Completed TPS is calculated from the settlement-counter increase recorded at the end of the measurement period, before the drain wait. The post-drain counter and Kafka lag are used only to record unfinished work.
 
 A tested rate passes only when:
 
@@ -299,46 +301,50 @@ Each result row represents one tested request rate. Formal values are the median
 
 The synchronous MySQL configuration was tested before Kafka, in-memory matching, or Redis reservation was added. Using 5-TPS boundary resolution, 25 TPS passed all three confirmation runs. The next tested rate, 30 TPS, completed every request but failed the cash and stock conservation checks.
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| 25 | 25.03 | 25.03 | 21.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---:|---|---|---|---|
+| 25 | 25.03 | 25.03 | 100.00% | 21.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| 30 | 30.00 | 30.00 | 100.00% | 19.78 ms | 0 / 0 | 0 | 3/5 pass | Fail |
 
 #### 8.5.2. C1 Kafka-Based Sequential Processing
 
 The rebuilt three-service C1 configuration sustained 30 TPS in both confirmation runs. At 35 TPS, only 52.24% of accepted orders settled during the measurement period and unfinished order work remained after the fixed drain, so the higher rate failed.
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| 30 | 30.02 | 30.00 | 18.95 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---:|---|---|---|---|
+| 30 | 30.02 | 30.00 | 99.95% | 18.95 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| 35 | 35.03 | 18.30 | 52.24% | 33.83 ms | 0 / 0 | 308 | 5/5 pass | Fail |
 
 #### 8.5.3. C2 In-Memory Order Matching
 
 The rebuilt C2 configuration added a startup-rebuilt in-memory order book and sustained 35 TPS in both confirmation runs. A 40 TPS trial passed once but failed its repeatability check because only 73.67% of accepted orders settled during the measurement period. Therefore, 40 TPS was rejected.
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| 35 | 35.02 | 35.00 | 18.65 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---:|---|---|---|---|
+| 35 | 35.02 | 35.00 | 99.95% | 18.65 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| 40 | 40.00 | 29.47 | 73.67% | 18.27 ms | 0 / 0 | 0 | 5/5 pass | Fail |
 
 #### 8.5.4. C3 Redis-Based Reservation
 
-The rebuilt C3 configuration will be measured after Redis reservation and startup preloading are added to C2.
+The rebuilt C3 configuration was tested using an automated fresh-start procedure. The procedure stopped all three applications, waited for old Kafka members to leave, reset MySQL and Redis, started fresh applications, and confirmed both Kafka partition assignments before k6. A 60 TPS run completed 96.78% in-window and therefore failed the 98% rule. The 55 TPS candidate passed twice with zero unfinished work, zero Kafka lag, and correct MySQL and Redis state.
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL / Redis checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+| Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL / Redis checks | Decision |
+|---:|---:|---:|---:|---:|---|---|---|---|
+| 55 | 55.00 | 54.93 | 99.88% | 18.11 ms | 0 / 0 | 0 | 5/5 / 5/5 pass | Pass |
+| 60 | 60.00 | 58.07 | 96.78% | 17.78 ms | 0 / 0 | 0 | 5/5 / 5/5 pass | Fail |
 
 #### 8.5.5. Overall Comparison
 
-The table compares the highest verified result currently available for each configuration.
+The table compares the highest verified result for each configuration.
 
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
 | C0: Synchronous database baseline | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
 | C1: Kafka sequential processing | 30 | 30.00 | +19.86% | Database matching became the bottleneck above 30 TPS |
 | C2: In-memory matching | 35 | 35.00 | +16.67% | In-memory matching improved throughput; finance database work became the next bottleneck |
-| C3: Redis reservation | To be measured | To be measured | To be calculated | Awaiting multi-stage retest |
+| C3: Redis reservation | 55 | 54.93 | +56.94% | Sustained 55 TPS with zero unfinished work and correct MySQL/Redis state |
 
-The improvement between consecutive configurations will be calculated as follows:
+The improvement between consecutive configurations is calculated as follows:
 
 ```text
 TPS improvement = (new sustainable TPS - previous sustainable TPS) / previous sustainable TPS x 100%

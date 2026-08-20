@@ -2,18 +2,18 @@
 
 > Test method: [C0-C3 Load-Test Strategy](01-c0-c3-strategy.md)
 
-The previous C1-C3 measurements were discarded because they tested older single-application implementations rather than the three-service configurations defined in the proposal. Only the C0 result remains valid until C1-C3 are retested.
+The previous C1-C3 measurements were discarded because they tested older single-application implementations rather than the three-service configurations defined in the proposal. The results below document the rebuilt C1, C2, and C3 configurations.
 
 ## 1. Test Environment
 
 | Field | Value |
 |---|---|
-| Test date | C0: 19 August 2026; C1-C2: 20 August 2026; C3: pending |
+| Test date | C0: 19 August 2026; C1-C3: 20 August 2026 |
 | Machine and operating system | Windows 11 Enterprise 10.0.26200; AMD Ryzen 7 7800X3D; 16 logical processors; 31.1 GB RAM |
 | Java and JVM settings | OpenJDK 26.0.1; default JVM settings |
 | k6 version | 2.2.0 |
-| Warm-up period | C1-C2: 10-second readiness delay after all health checks; no traffic warm-up |
-| Startup readiness | Finance, match, and exchange health endpoints must pass before k6 starts |
+| Warm-up period | C1-C3: 10-second readiness delay after health and Kafka consumer readiness; no traffic warm-up |
+| Startup readiness | Finance, match, and exchange health endpoints pass; both Kafka groups have assigned partitions and zero lag before k6 starts |
 | Measurement period | 30 seconds per run |
 | Drain period | C0: 0 seconds; rebuilt C1-C3: 5 seconds |
 | Completion measurement | C0: synchronous accepted responses; rebuilt C1-C3: `finance.settlements.completed` before drain |
@@ -31,7 +31,7 @@ The previous C1-C3 measurements were discarded because they tested older single-
 | C0 | `567b63b` | Synchronous processing with MySQL | Tested |
 | C1 | `0739e88` | Three-service Kafka pipeline with database matching | Tested |
 | C2 | `edd50d6` | C1 with in-memory order matching | Tested |
-| C3 | `fb57885` | C2 with Redis reservation and startup preload | Awaiting retest |
+| C3 | `c935b7f` | C2 with Redis reservation and startup preload | Tested on `v3` |
 
 ## 3. C0 Results
 
@@ -109,11 +109,26 @@ The verified C2 score is **35 TPS**. The two confirmation runs produced a median
 
 ## 6. C3 Results
 
-**Pending.** Retest C2 after adding Redis reservation and startup preloading.
+### Rate Search
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL / Redis checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+The corrected runner restarted all three applications, waited for the old consumers to leave, reset the data, and waited for both new consumers to own their partitions before k6. The historical 110 TPS target overloaded the complete pipeline. A 60 TPS run drained successfully but missed the 98% in-window completion rule, so the candidate was reduced to 55 TPS.
+
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag (order / trade) | Errors / drops | SQL / Redis checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Historical target check | 110 | 109.97 | 56.27 | 51.17% | 17.05 ms | 301 | 1,310 | 1,570 / 2 | 2 / 0 | 5/5 / 3/5 pass | Fail |
+| Smaller step | 60 | 60.00 | 58.07 | 96.78% | 17.78 ms | 58 | 0 | 0 / 0 | 0 / 0 | 5/5 / 5/5 pass | Fail |
+| Revised candidate | 55 | 55.03 | 54.97 | 99.88% | 17.76 ms | 2 | 0 | 0 / 0 | 0 / 0 | 5/5 / 5/5 pass | Pass |
+
+### Final TPS Confirmation
+
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag (order / trade) | Errors / drops | SQL / Redis checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Confirmation 1 | 55 | 55.00 | 54.93 | 99.88% | 17.81 ms | 2 | 0 | 0 / 0 | 0 / 0 | 5/5 / 5/5 pass | Pass |
+| Confirmation 2 | 55 | 55.00 | 54.93 | 99.88% | 18.42 ms | 2 | 0 | 0 / 0 | 0 / 0 | 5/5 / 5/5 pass | Pass |
+
+### Conclusion
+
+The verified C3 score on current `v3` is **55 TPS**. The two confirmation runs produced a median completed throughput of **54.93 TPS** and a median p95 latency of **18.11 ms**. The next tested rate, 60 TPS, failed because only 96.78% completed within the measurement window.
 
 ## 7. Overall Comparison
 
@@ -122,7 +137,7 @@ The verified C2 score is **35 TPS**. The two confirmation runs produced a median
 | C0 | 25 | 25.03 | Baseline | Existing synchronous baseline |
 | C1 | 30 | 30.00 | +19.86% | Kafka improves intake isolation, but database matching becomes the bottleneck above 30 TPS |
 | C2 | 35 | 35.00 | +16.67% | In-memory matching improves throughput, while finance database work becomes the next bottleneck |
-| C3 | Pending | Pending | Pending | Awaiting multi-stage retest |
+| C3 | 55 | 54.93 | +56.94% | Redis-backed reservation substantially raised completed throughput while preserving state correctness |
 
 ## 8. Invalid Runs and Notes
 
@@ -133,5 +148,7 @@ The verified C2 score is **35 TPS**. The two confirmation runs produced a median
 | C0 | 30 TPS | All requests completed, but cash and stock conservation checks failed | Marked as failed; reduced the rate to 25 TPS |
 | C1 | Exploratory runs | Kafka's original Java CLI health check consumed roughly 70-90% CPU and distorted throughput | Discarded; replaced it with a lightweight TCP health check before formal testing |
 | C1 | Container-restart trials | Restarting Kafka before every rate introduced log-recovery work during measurement startup | Discarded; kept infrastructure stable and restarted only the application services as defined by the strategy |
+| C3 | Legacy 110 TPS result | Counted work after the drain in the throughput figure and had no repeated confirmation under the corrected readiness protocol | Not comparable with the corrected completed-TPS result |
+| C3 | Two confirmation attempts | Docker API access was denied before reset/startup completed; k6 never started | Infrastructure-invalid attempts discarded and the confirmation was rerun |
 
 The removed C1-C3 values remain available only on the `codex/benchmark-c1-monolith`, `codex/benchmark-c2-monolith`, and `codex/benchmark-c3-monolith` archival branches. They are not part of the formal comparison.

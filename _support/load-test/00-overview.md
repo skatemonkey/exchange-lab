@@ -38,6 +38,14 @@ The formal comparison is defined in the [C0-C3 Load-Test Strategy](01-c0-c3-stra
 
 ## 3. Commands
 
+For C3 on current `v3`, use the automated runner. It stops old application processes, waits for old Kafka members to leave, resets the data, starts fresh services, waits for assigned consumer partitions, runs k6, verifies SQL and Redis, and shuts the applications down:
+
+```powershell
+.\_support\load-test\run-c3-rate.ps1 -Rate 55 -Run 1
+```
+
+The commands below are the manual equivalent.
+
 1. Start the infrastructure required by the selected configuration. C1 and C2 use MySQL and Kafka; C3 also uses Redis.
 
    ```powershell
