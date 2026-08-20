@@ -264,8 +264,8 @@ flowchart LR
 #### Phase 1: Prepare the Configuration
 
 - Load the required configuration from its recorded Git commit or an isolated worktree and start its required infrastructure.
-- Before every measured rate, stop the application, confirm that Kafka has no remaining backlog, reset MySQL and Redis where applicable, load the same seed data, and start a new application process.
-- Confirm that the application, Kafka consumer, and in-memory state are ready before k6 starts. Do not reuse an application process between measured rates.
+- Before every measured rate, stop the active application process or processes, confirm zero Kafka lag where applicable, reset MySQL and Redis where applicable, and load the same seed data.
+- Start the single C0 application or, for C1-C3, start finance, match, and exchange services in that order. Confirm the required health endpoints, in-memory order book, and C3 Redis preload before k6 starts. Do not reuse any application process between measured rates.
 
 #### Phase 2: Run the Load Test
 
@@ -305,27 +305,27 @@ The synchronous MySQL configuration was tested before Kafka, in-memory matching,
 
 #### 8.5.2. C1 Kafka-Based Sequential Processing
 
-Under the corrected restart-before-every-rate protocol, Kafka-based sequential processing achieved a verified target of 50 TPS. The 55 TPS test failed the 98% completion rule, while all three 50 TPS confirmation runs passed.
+The rebuilt C1 configuration will be tested after the three-service startup and verification workflow is finalized. Results from the previous single-application implementation were discarded because they did not represent the architecture defined in Section 8.3.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| 50 | 50.03 | 49.97 | 7.12 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
 
 #### 8.5.3. C2 In-Memory Order Matching
 
-Adding the in-memory order book produced the same verified target of 50 TPS. All three 50 TPS confirmation runs passed, while 55 TPS failed because completed processing did not keep pace with accepted orders.
+The rebuilt C2 configuration will be measured after adding the startup-rebuilt in-memory order book to C1.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| 50 | 50.03 | 49.97 | 6.89 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
 
 #### 8.5.4. C3 Redis-Based Reservation
 
-Redis reservation retained the same verified target of 50 TPS. The initial 55 TPS run and two confirmations passed, but the third confirmation completed only 91.03% during measurement, so 55 TPS was rejected. All three 50 TPS confirmations passed their SQL and Redis consistency checks.
+The rebuilt C3 configuration will be measured after Redis reservation and startup preloading are added to C2.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL / Redis checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| 50 | 50.03 | 49.97 | 9.57 ms | 0 / 0 | 0 | 5/5; 4/4 pass | Pass |
+| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
 
 #### 8.5.5. Overall Comparison
 
@@ -334,9 +334,9 @@ The table compares the highest verified result currently available for each conf
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
 | C0: Synchronous database baseline | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
-| C1: Kafka sequential processing | 50 | 49.97 | Not directly comparable until C0 is retested | Corrected result using a fresh application process for every rate |
-| C2: In-memory matching | 50 | 49.97 | 0.0% | In-memory matching matched C1's sustainable rate but did not raise the 5-TPS boundary |
-| C3: Redis reservation | 50 | 49.97 | 0.0% | Redis preserved consistency but did not raise the sustainable 5-TPS boundary |
+| C1: Kafka sequential processing | To be measured | To be measured | To be calculated | Awaiting multi-stage retest |
+| C2: In-memory matching | To be measured | To be measured | To be calculated | Awaiting multi-stage retest |
+| C3: Redis reservation | To be measured | To be measured | To be calculated | Awaiting multi-stage retest |
 
 The improvement between consecutive configurations will be calculated as follows:
 

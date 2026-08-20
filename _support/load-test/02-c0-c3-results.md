@@ -2,32 +2,35 @@
 
 > Test method: [C0-C3 Load-Test Strategy](01-c0-c3-strategy.md)
 
+The previous C1-C3 measurements were discarded because they tested older single-application implementations rather than the three-service configurations defined in the proposal. Only the C0 result remains valid until C1-C3 are retested.
+
 ## 1. Test Environment
 
 | Field | Value |
 |---|---|
-| Test date | C0: 19 August 2026; C1-C3: 20 August 2026 |
+| Test date | C0: 19 August 2026; rebuilt C1-C3: pending |
 | Machine and operating system | Windows 11 Enterprise 10.0.26200; AMD Ryzen 7 7800X3D; 16 logical processors; 31.1 GB RAM |
 | Java and JVM settings | OpenJDK 26.0.1; default JVM settings |
 | k6 version | 2.2.0 |
-| Warm-up period | Corrected C1-C3 runs: none; every measured rate used a fresh application process |
-| Startup readiness | Corrected C1-C3 runs: 10-second startup window; application and Kafka consumer ready before k6 started |
+| Warm-up period | Pending for rebuilt C1-C3 |
+| Startup readiness | Finance, match, and exchange health endpoints must pass before k6 starts |
 | Measurement period | 30 seconds per run |
-| Drain period | C0: 0 seconds; asynchronous C1-C3: 5 seconds |
-| Completion measurement | C0: synchronous accepted responses; C1-C3: `exchange.orders.completed` after successful Kafka processing |
-| Application restart | Corrected C1-C3 runs: required before every rate; C2-C3 rebuilt the in-memory order book during startup |
-| C3 state reset | MySQL reseeded and Redis flushed before every measured rate |
+| Drain period | C0: 0 seconds; rebuilt C1-C3: 5 seconds |
+| Completion measurement | C0: synchronous accepted responses; rebuilt C1-C3: `finance.settlements.completed` before drain |
+| Application restart | All three application services must restart before every measured C1-C3 rate |
+| C2-C3 startup state | Match service rebuilds the in-memory order book from MySQL |
+| C3 startup state | Redis is flushed before startup; finance service then preloads availability from MySQL |
 | k6 script | `k6/02-tps-benchmark.js` |
-| Seed and verification files | `seed.sql`, `verify.sql`, and C3 `verify-redis.ps1` |
+| Verification files | `seed.sql`, `verify.sql`, and C3 `verify-redis.ps1` |
 
 ## 2. Configuration Versions
 
-| Configuration | Git commit | Main difference | Status |
+| Configuration | Implementation commit | Main difference | Status |
 |---|---|---|---|
 | C0 | `567b63b` | Synchronous processing with MySQL | Tested |
-| C1 | `5f248cc` | Adds Kafka-based sequential processing | Retested with restart before every rate |
-| C2 | `e5f84d1` | Adds in-memory order matching | Retested with restart before every rate |
-| C3 | `343abd6` | Adds Redis reservation with C3 completion and consistency verification | Tested |
+| C1 | `0739e88` | Three-service Kafka pipeline with database matching | Awaiting retest |
+| C2 | `edd50d6` | C1 with in-memory order matching | Awaiting retest |
+| C3 | `fb57885` | C2 with Redis reservation and startup preload | Awaiting retest |
 
 ## 3. C0 Results
 
@@ -53,103 +56,40 @@ The initial rates located the limit, and smaller steps narrowed it. The 30 TPS r
 
 ### Conclusion
 
-The verified C0 score is **25 TPS**. The three confirmation runs produced a median completed throughput of **25.03 TPS** and a median p95 latency of **21.01 ms**. Because C0 is synchronous, each accepted response represents completed processing and no drain backlog exists.
+The verified C0 score is **25 TPS**. The three confirmation runs produced a median completed throughput of **25.03 TPS** and a median p95 latency of **21.01 ms**.
 
 ## 4. C1 Results
 
-### Rate Search
+**Pending.** Retest the three-service Kafka pipeline with database matching.
 
-Every rate used a newly started application process and freshly seeded database. The initial rates located the processing limit, and smaller steps narrowed it. The 55 TPS run fell below the 98% completion rule, so 50 TPS became the highest candidate.
-
-| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Initial rate | 10 | 10.03 | 10.00 | 99.67% | 9.40 ms | 1 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Initial rate | 20 | 20.03 | 20.00 | 99.83% | 8.02 ms | 1 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Initial rate | 40 | 40.03 | 40.00 | 99.92% | 7.56 ms | 1 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Initial rate | 80 | 80.00 | 59.50 | 74.38% | 6.92 ms | 330 | 285 | 262 | 0 / 0 | 5/5 pass | Fail |
-| Smaller step | 60 | 60.03 | 56.37 | 93.89% | 7.29 ms | 110 | 0 | 0 | 0 / 0 | 5/5 pass | Fail |
-| Smaller step | 50 | 50.03 | 49.93 | 99.80% | 7.11 ms | 3 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Smaller step | 55 | 55.00 | 53.13 | 96.61% | 6.89 ms | 56 | 0 | 0 | 0 / 0 | 5/5 pass | Fail |
-
-### Final TPS Confirmation
-
-| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Confirmation 1 | 50 | 50.03 | 49.97 | 99.87% | 7.27 ms | 2 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Confirmation 2 | 50 | 50.03 | 49.97 | 99.87% | 7.04 ms | 2 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Confirmation 3 | 50 | 50.00 | 49.93 | 99.87% | 7.12 ms | 2 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-
-### Conclusion
-
-Under the corrected restart-before-every-rate protocol, the verified C1 score is **50 TPS**. The three confirmation runs produced a median accepted throughput of **50.03 TPS**, a median completed throughput of **49.97 TPS**, and a median p95 API latency of **7.12 ms**.
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---|---|---|---|
+| Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ## 5. C2 Results
 
-### Rate Search
+**Pending.** Retest C1 after adding the startup-rebuilt in-memory order book.
 
-Every rate used a newly started application process and freshly seeded database. The initial rates located the processing limit, and smaller steps narrowed it. At 55 TPS and above, completed processing did not keep pace with accepted orders. Therefore, 50 TPS became the highest candidate.
-
-| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Initial rate | 10 | 10.00 | 10.00 | 100.00% | 8.72 ms | 0 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Initial rate | 20 | 20.03 | 20.00 | 99.83% | 7.63 ms | 1 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Initial rate | 40 | 40.03 | 40.00 | 99.92% | 7.32 ms | 1 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Initial rate | 80 | 80.00 | 67.33 | 84.17% | 6.93 ms | 349 | 31 | 0 | 0 / 0 | 5/5 pass | Fail |
-| Smaller step | 60 | 60.00 | 53.33 | 88.89% | 7.23 ms | 200 | 0 | 0 | 0 / 0 | 5/5 pass | Fail |
-| Smaller step | 50 | 50.00 | 49.93 | 99.87% | 6.86 ms | 2 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Smaller step | 55 | 55.03 | 48.80 | 88.67% | 6.88 ms | 187 | 0 | 0 | 0 / 0 | 5/5 pass | Fail |
-
-### Final TPS Confirmation
-
-| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Confirmation 1 | 50 | 50.00 | 49.93 | 99.87% | 6.87 ms | 2 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Confirmation 2 | 50 | 50.03 | 49.97 | 99.87% | 6.90 ms | 2 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-| Confirmation 3 | 50 | 50.03 | 49.97 | 99.87% | 6.89 ms | 2 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
-
-### Conclusion
-
-Under the corrected restart-before-every-rate protocol, the verified C2 score is **50 TPS**. The three confirmation runs produced a median accepted throughput of **50.03 TPS**, a median completed throughput of **49.97 TPS**, and a median p95 API latency of **6.89 ms**. C2 matched C1's corrected sustainable target but did not increase it.
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+|---:|---:|---:|---:|---|---|---|---|
+| Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ## 6. C3 Results
 
-### Rate Search
+**Pending.** Retest C2 after adding Redis reservation and startup preloading.
 
-Every rate used a newly started application process, freshly seeded MySQL, and empty Redis database. The initial rates located the processing limit, and smaller steps narrowed it. Although 55 TPS initially passed and passed two confirmations, its third confirmation fell below the 98% completion rule. Therefore, 55 TPS was rejected and 50 TPS became the highest verified candidate.
-
-| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL / Redis checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Initial rate | 10 | 10.03 | 10.00 | 99.67% | 12.11 ms | 1 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| Initial rate | 20 | 20.00 | 20.00 | 100.00% | 11.32 ms | 0 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| Initial rate | 40 | 40.00 | 40.00 | 100.00% | 9.83 ms | 0 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| Initial rate | 80 | 80.03 | 62.37 | 77.93% | 8.42 ms | 327 | 203 | 387 | 0 / 0 | 5/5; 4/4 final pass | Fail |
-| Smaller step | 60 | 60.03 | 53.30 | 88.78% | 9.38 ms | 202 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Fail |
-| Smaller step | 50 | 50.03 | 49.97 | 99.87% | 9.47 ms | 2 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| Smaller step | 55 | 55.00 | 54.43 | 98.97% | 9.02 ms | 17 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| 55 TPS confirmation 1 | 55 | 55.00 | 54.63 | 99.33% | 9.64 ms | 11 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| 55 TPS confirmation 2 | 55 | 55.00 | 54.83 | 99.70% | 9.06 ms | 5 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| 55 TPS confirmation 3 | 55 | 55.00 | 50.07 | 91.03% | 9.91 ms | 148 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Fail |
-
-### Final TPS Confirmation
-
-| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL / Redis checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Confirmation 1 | 50 | 50.03 | 49.97 | 99.87% | 9.57 ms | 2 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| Confirmation 2 | 50 | 50.00 | 49.93 | 99.87% | 9.00 ms | 2 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-| Confirmation 3 | 50 | 50.03 | 49.97 | 99.87% | 9.88 ms | 2 | 0 | 0 | 0 / 0 | 5/5; 4/4 pass | Pass |
-
-### Conclusion
-
-The verified C3 score is **50 TPS**. The three confirmation runs produced a median accepted throughput of **50.03 TPS**, a median completed throughput of **49.97 TPS**, and a median p95 API latency of **9.57 ms**. Redis reservation preserved correctness but did not raise C2's verified sustainable target.
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL / Redis checks | Decision |
+|---:|---:|---:|---:|---|---|---|---|
+| Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ## 7. Overall Comparison
 
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
-| C0 | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
-| C1 | 50 | 49.97 | Not directly comparable until C0 uses the corrected protocol | Corrected result using a fresh application process for every rate |
-| C2 | 50 | 49.97 | 0.0% from C1 target TPS | In-memory matching matched C1's sustainable rate but did not raise the 5-TPS boundary |
-| C3 | 50 | 49.97 | 0.0% from C2 target TPS | Redis reservation preserved consistency but did not raise the sustainable 5-TPS boundary |
+| C0 | 25 | 25.03 | Baseline | Existing synchronous baseline |
+| C1 | Pending | Pending | Pending | Awaiting multi-stage retest |
+| C2 | Pending | Pending | Pending | Awaiting multi-stage retest |
+| C3 | Pending | Pending | Pending | Awaiting multi-stage retest |
 
 ## 8. Invalid Runs and Notes
 
@@ -158,8 +98,5 @@ The verified C3 score is **50 TPS**. The three confirmation runs produced a medi
 | C0 | 5 TPS warm-up | Two request failures caused by MySQL deadlocks during cold start | Discarded as planned and reseeded before formal testing |
 | C0 | 40 TPS | Four requests failed and two conservation checks failed | Marked as failed; narrowed the boundary |
 | C0 | 30 TPS | All requests completed, but cash and stock conservation checks failed | Marked as failed; reduced the rate to 25 TPS |
-| C1 | 55-80 TPS | Completed processing did not keep pace with accepted orders under the corrected restart protocol | Set the highest verified target to 50 TPS |
-| C2 | 55-80 TPS | Completed processing did not keep pace with accepted orders; the 80 TPS run retained 31 in-flight orders after the fixed drain | Set the highest verified target to 50 TPS |
-| C3 | 55 TPS | One of three confirmation runs completed only 91.03% during measurement | Rejected 55 TPS and confirmed 50 TPS instead |
-| C3 | 60-80 TPS | Completed processing did not keep pace; 80 TPS retained 203 unfinished orders and Kafka lag 387 after the fixed drain | Marked as failed and narrowed the boundary |
-| C3 | 80 TPS | Redis checks observed two transient mismatches while 203 orders were still processing; all four checks passed after the backlog drained | Retained the run as a throughput failure and recorded final consistency separately |
+
+The removed C1-C3 values remain available only on the `codex/benchmark-c1-monolith`, `codex/benchmark-c2-monolith`, and `codex/benchmark-c3-monolith` archival branches. They are not part of the formal comparison.

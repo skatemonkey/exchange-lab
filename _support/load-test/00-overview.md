@@ -38,9 +38,13 @@ The formal comparison is defined in the [C0-C3 Load-Test Strategy](01-c0-c3-stra
 
 ## 3. Commands
 
-1. Start MySQL, Kafka, and Redis.
+1. Start the infrastructure required by the selected configuration. C1 and C2 use MySQL and Kafka; C3 also uses Redis.
 
    ```powershell
+   # C1 and C2
+   docker compose up -d mysql kafka
+
+   # C3
    docker compose up -d mysql kafka redis
    ```
 
@@ -60,24 +64,45 @@ The formal comparison is defined in the [C0-C3 Load-Test Strategy](01-c0-c3-stra
 
    Or run [seed.sql](seed.sql) manually in a DataGrip MySQL console.
 
-4. Start the app.
+4. Start each application service in a separate PowerShell terminal. Start `finance-service` first so C3 can preload Redis, then start `match-service` so it can rebuild the order book, and finally start `exchange-service`.
 
    ```powershell
    $env:JAVA_HOME = "$env:USERPROFILE\.jdks\openjdk-26.0.1"
    $env:Path = "$env:JAVA_HOME\bin;$env:Path"
-   .\gradlew.bat bootRun
+   .\gradlew.bat :finance-service:bootRun
+   ```
+
+   ```powershell
+   $env:JAVA_HOME = "$env:USERPROFILE\.jdks\openjdk-26.0.1"
+   $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+   .\gradlew.bat :match-service:bootRun
+   ```
+
+   ```powershell
+   $env:JAVA_HOME = "$env:USERPROFILE\.jdks\openjdk-26.0.1"
+   $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+   .\gradlew.bat :exchange-service:bootRun
+   ```
+
+   Confirm all three services are ready:
+
+   ```powershell
+   Invoke-RestMethod http://localhost:8081/actuator/health
+   Invoke-RestMethod http://localhost:8082/actuator/health
+   Invoke-RestMethod http://localhost:8080/actuator/health
    ```
 
 5. Run k6 in another terminal.
 
    ```powershell
-   k6 run .\_support\load-test\k6\01-buy-orders.js
+   k6 run -e RATE=20 -e DURATION=30s .\_support\load-test\k6\02-tps-benchmark.js
    ```
 
-6. Verify DB totals.
+6. After the drain period, verify database totals. For C3, also verify Redis.
 
    ```powershell
    Get-Content .\_support\load-test\verify.sql | docker exec -i exchange-lab-mysql mysql -uexchange_lab -pexchange_lab exchange_lab
+   .\_support\load-test\verify-redis.ps1
    ```
 
    Or run [verify.sql](verify.sql) manually in a DataGrip MySQL console.
