@@ -289,7 +289,7 @@ A tested rate passes only when:
 
 1. Completed TPS keeps pace with accepted TPS.
 2. No unfinished work continues to accumulate, and the fixed drain period clears the remaining work.
-3. No requests or k6 iterations fail, and all SQL correctness checks pass.
+3. No requests or k6 iterations fail, all SQL correctness checks pass, and C3's Redis availability matches MySQL.
 
 For asynchronous C1-C3, keeping pace means that at least 98% of accepted orders complete during the measurement period, while the drain period must leave zero unfinished orders and zero Kafka lag.
 
@@ -321,11 +321,11 @@ Adding the in-memory order book produced the same verified target of 50 TPS. All
 
 #### 8.5.4. C3 Redis-Based Reservation
 
-This section will record the results after Redis reservation is added to C2.
+Redis reservation retained the same verified target of 50 TPS. The initial 55 TPS run and two confirmations passed, but the third confirmation completed only 91.03% during measurement, so 55 TPS was rejected. All three 50 TPS confirmations passed their SQL and Redis consistency checks.
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
+| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL / Redis checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+| 50 | 50.03 | 49.97 | 9.57 ms | 0 / 0 | 0 | 5/5; 4/4 pass | Pass |
 
 #### 8.5.5. Overall Comparison
 
@@ -336,7 +336,7 @@ The table compares the highest verified result currently available for each conf
 | C0: Synchronous database baseline | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
 | C1: Kafka sequential processing | 50 | 49.97 | Not directly comparable until C0 is retested | Corrected result using a fresh application process for every rate |
 | C2: In-memory matching | 50 | 49.97 | 0.0% | In-memory matching matched C1's sustainable rate but did not raise the 5-TPS boundary |
-| C3: Redis reservation | To be measured | To be measured | To be calculated | To be recorded |
+| C3: Redis reservation | 50 | 49.97 | 0.0% | Redis preserved consistency but did not raise the sustainable 5-TPS boundary |
 
 The improvement between consecutive configurations will be calculated as follows:
 

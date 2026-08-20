@@ -26,10 +26,10 @@ Each configuration must use a recorded Git commit and the same API, seed data, w
 
    For C0, add `-e METRICS_MODE=sync -e DRAIN_SECONDS=0` because every accepted response has already completed processing.
 
-3. Test smaller increments between the last pass and first failure, then repeat the highest passing rate three times. Apply the complete stop, reseed, restart, and readiness sequence before every repetition.
-4. After every run, allow the fixed drain period, execute `verify.sql`, and reject any invalid run.
+3. Test smaller increments between the last pass and first failure, then repeat the highest passing rate three times. Apply the complete stop, reset, restart, and readiness sequence before every repetition.
+4. After every run, allow the fixed drain period and execute `verify.sql`. For C3, also execute `verify-redis.ps1` to compare Redis availability with MySQL. Reject any invalid run.
 5. Record and commit the verified result on the configuration branch first. Then return to `v3` and copy the finalized result into [C0-C3 Load-Test Results](02-c0-c3-results.md).
 
 ## 4. Pass Rules
 
-A rate passes only when no requests or k6 iterations fail and every SQL check passes. For asynchronous C1-C3, at least 98% of accepted orders must complete during the 30-second measurement period, and the fixed drain must leave zero unfinished orders and zero Kafka lag.
+A rate passes only when no requests or k6 iterations fail and every SQL check passes. C3 must also pass every Redis consistency check. For asynchronous C1-C3, at least 98% of accepted orders must complete during the 30-second measurement period, and the fixed drain must leave zero unfinished orders and zero Kafka lag.
