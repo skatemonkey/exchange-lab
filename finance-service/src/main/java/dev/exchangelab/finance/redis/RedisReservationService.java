@@ -57,6 +57,14 @@ public class RedisReservationService {
         this.redisTemplate = redisTemplate;
     }
 
+    public void setAvailableCash(UUID traderId, BigDecimal amount) {
+        setAvailable(cashAvailableKey(traderId), amount);
+    }
+
+    public void setAvailableStock(UUID traderId, String symbol, BigDecimal amount) {
+        setAvailable(stockAvailableKey(traderId, symbol), amount);
+    }
+
     public boolean reserveCashIfLoaded(UUID traderId, BigDecimal amount) {
         return reserveIfLoaded(
                 cashAvailableKey(traderId),
@@ -111,6 +119,11 @@ public class RedisReservationService {
             BigDecimal availableIfMissing
     ) {
         increase(stockAvailableKey(traderId, symbol), amount, availableIfMissing);
+    }
+
+    private void setAvailable(String key, BigDecimal amount) {
+        validateNonNegative(amount);
+        redisTemplate.opsForValue().set(key, toScaledAmount(amount));
     }
 
     private boolean reserveIfLoaded(String key, BigDecimal amount, String insufficientMessage) {
