@@ -28,20 +28,29 @@
 
 ## 3. C0 Results
 
-The initial ladder found a pass at 20 TPS and a failure at 40 TPS. The boundary was narrowed to 30 TPS and then 25 TPS using 5-TPS resolution. Three separate confirmation runs verified 25 TPS.
+### Rate Search
 
-| Test | Target TPS | Accepted TPS | Completed TPS | p95 latency | Request errors / dropped iterations | Unfinished work | SQL checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---|
-| Ladder | 10 | 10.03 | 10.03 | 22.84 ms | 0 / 0 | 0 | 5/5 pass | Pass |
-| Ladder | 20 | 20.00 | 20.00 | 22.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
-| Ladder | 40 | 39.90 | 39.90 | 21.75 ms | 4 / 0 | 0 | 3/5 pass | Fail |
-| Boundary | 30 | 30.00 | 30.00 | 19.78 ms | 0 / 0 | 0 | 3/5 pass | Fail |
-| Boundary | 25 | 25.00 | 25.00 | 19.85 ms | 0 / 0 | 0 | 5/5 pass | Pass |
-| Confirmation 1 | 25 | 25.00 | 25.00 | 21.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
-| Confirmation 2 | 25 | 25.03 | 25.03 | 20.49 ms | 0 / 0 | 0 | 5/5 pass | Pass |
-| Confirmation 3 | 25 | 25.03 | 25.03 | 22.07 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+The initial rates located the limit, and smaller steps narrowed it. The 30 TPS run failed its SQL checks, so 25 TPS became the highest candidate.
 
-The three confirmation runs produced a median completed throughput of **25.03 TPS** and a median p95 latency of **21.01 ms**. Because C0 is synchronous, each accepted response represents completed processing and no drain backlog exists.
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Initial rate | 10 | 10.03 | 10.03 | 100.00% | 22.84 ms | 0 | 0 | N/A | 0 / 0 | 5/5 pass | Pass |
+| Initial rate | 20 | 20.00 | 20.00 | 100.00% | 22.01 ms | 0 | 0 | N/A | 0 / 0 | 5/5 pass | Pass |
+| Initial rate | 40 | 39.90 | 39.90 | 100.00% | 21.75 ms | 0 | 0 | N/A | 4 / 0 | 3/5 pass | Fail |
+| Smaller step | 30 | 30.00 | 30.00 | 100.00% | 19.78 ms | 0 | 0 | N/A | 0 / 0 | 3/5 pass | Fail |
+| Smaller step | 25 | 25.00 | 25.00 | 100.00% | 19.85 ms | 0 | 0 | N/A | 0 / 0 | 5/5 pass | Pass |
+
+### Final TPS Confirmation
+
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Confirmation 1 | 25 | 25.00 | 25.00 | 100.00% | 21.01 ms | 0 | 0 | N/A | 0 / 0 | 5/5 pass | Pass |
+| Confirmation 2 | 25 | 25.03 | 25.03 | 100.00% | 20.49 ms | 0 | 0 | N/A | 0 / 0 | 5/5 pass | Pass |
+| Confirmation 3 | 25 | 25.03 | 25.03 | 100.00% | 22.07 ms | 0 | 0 | N/A | 0 / 0 | 5/5 pass | Pass |
+
+### Conclusion
+
+The verified C0 score is **25 TPS**. The three confirmation runs produced a median completed throughput of **25.03 TPS** and a median p95 latency of **21.01 ms**. Because C0 is synchronous, each accepted response represents completed processing and no drain backlog exists.
 
 ## 4. C1 Results
 
