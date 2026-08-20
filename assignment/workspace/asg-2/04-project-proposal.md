@@ -291,6 +291,8 @@ A tested rate passes only when:
 2. No unfinished work continues to accumulate, and the fixed drain period clears the remaining work.
 3. No requests or k6 iterations fail, and all SQL correctness checks pass.
 
+For asynchronous C1-C3, keeping pace means that at least 98% of accepted orders complete during the measurement period, while the drain period must leave zero unfinished orders and zero Kafka lag.
+
 Each result row represents one tested request rate. Formal values will be the medians from three runs under the same conditions. The sustainable TPS of a configuration is the highest target rate for which all three repeated runs pass.
 
 #### 8.5.1. C0 Synchronous Database Baseline
@@ -303,11 +305,11 @@ The synchronous MySQL configuration was tested before Kafka, in-memory matching,
 
 #### 8.5.2. C1 Kafka-Based Sequential Processing
 
-This section will record the results after Kafka-based sequential processing is added to C0.
+Kafka-based sequential processing increased the verified target from 25 TPS to 60 TPS. A 65 TPS test was not repeatable, so it was rejected and 60 TPS was confirmed in three runs.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured | To be measured |
+| 60 | 60.00 | 59.80 | 6.38 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 
 #### 8.5.3. C2 In-Memory Order Matching
 
@@ -332,7 +334,7 @@ The highest passing result from each configuration will be placed in the followi
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
 | C0: Synchronous database baseline | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
-| C1: Kafka sequential processing | To be measured | To be measured | To be calculated | To be recorded |
+| C1: Kafka sequential processing | 60 | 59.80 | +140% | Kafka increased intake capacity, while database processing remained sequential |
 | C2: In-memory matching | To be measured | To be measured | To be calculated | To be recorded |
 | C3: Redis reservation | To be measured | To be measured | To be calculated | To be recorded |
 

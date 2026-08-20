@@ -32,4 +32,4 @@ Each configuration must use a recorded Git commit and the same API, seed data, w
 
 ## 4. Pass Rules
 
-A rate passes only when completed TPS keeps pace with accepted TPS, no requests or k6 iterations fail, unfinished work does not continue growing, and every SQL check passes.
+A rate passes only when no requests or k6 iterations fail and every SQL check passes. For asynchronous C1-C3, at least 98% of accepted orders must complete during the 30-second measurement period, and the fixed drain must leave zero unfinished orders and zero Kafka lag.

@@ -6,13 +6,14 @@
 
 | Field | Value |
 |---|---|
-| Test date | 19 August 2026 |
+| Test date | C0: 19 August 2026; C1: 20 August 2026 |
 | Machine and operating system | Windows 11 Enterprise 10.0.26200; AMD Ryzen 7 7800X3D; 16 logical processors; 31.1 GB RAM |
 | Java and JVM settings | OpenJDK 26.0.1; default JVM settings |
 | k6 version | 2.2.0 |
 | Warm-up period | 10 seconds at 5 TPS; discarded, then database reseeded |
 | Measurement period | 30 seconds per run |
-| Drain period | 0 seconds for synchronous C0 |
+| Drain period | C0: 0 seconds; asynchronous C1: 5 seconds |
+| Completion measurement | C0: synchronous accepted responses; C1: `exchange.orders.completed` after successful Kafka processing |
 | k6 script | `k6/02-tps-benchmark.js` |
 | Seed and verification files | `seed.sql` and `verify.sql` |
 
@@ -21,7 +22,7 @@
 | Configuration | Git commit | Main difference | Status |
 |---|---|---|---|
 | C0 | `567b63b` | Synchronous processing with MySQL | Tested |
-| C1 | Pending | Adds Kafka-based sequential processing | Pending |
+| C1 | `ad15ba4` | Adds Kafka-based sequential processing | Tested |
 | C2 | Pending | Adds in-memory order matching | Pending |
 | C3 | Pending | Adds Redis reservation | Pending |
 
@@ -44,9 +45,15 @@ The three confirmation runs produced a median completed throughput of **25.03 TP
 
 ## 4. C1 Results
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+The rate search found that 65 TPS was not repeatable, so 60 TPS was tested three times for confirmation.
+
+| Run | Target TPS | Accepted TPS | Completed TPS | p95 latency | Completed during drain | Unfinished work / Kafka lag | Errors / dropped iterations | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Confirmation 1 | 60 | 60.00 | 59.80 | 6.38 ms | 6 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+| Confirmation 2 | 60 | 60.03 | 59.80 | 6.40 ms | 7 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+| Confirmation 3 | 60 | 60.00 | 59.73 | 6.37 ms | 8 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+
+The verified C1 score is **60 TPS**. The three confirmation runs produced a median completed throughput of **59.80 TPS** and a median p95 API latency of **6.38 ms**.
 
 ## 5. C2 Results
 
@@ -65,7 +72,7 @@ The three confirmation runs produced a median completed throughput of **25.03 TP
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
 | C0 | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
-| C1 | Pending | Pending | Pending | Pending |
+| C1 | 60 | 59.80 | +140% from C0 target TPS | Kafka decoupled fast intake from sequential database processing |
 | C2 | Pending | Pending | Pending | Pending |
 | C3 | Pending | Pending | Pending | Pending |
 
@@ -76,3 +83,4 @@ The three confirmation runs produced a median completed throughput of **25.03 TP
 | C0 | 5 TPS warm-up | Two request failures caused by MySQL deadlocks during cold start | Discarded as planned and reseeded before formal testing |
 | C0 | 40 TPS | Four requests failed and two conservation checks failed | Marked as failed; narrowed the boundary |
 | C0 | 30 TPS | All requests completed, but cash and stock conservation checks failed | Marked as failed; reduced the rate to 25 TPS |
+| C1 | 65-80 TPS | Completed processing did not reliably keep pace with accepted orders | Set the highest verified target to 60 TPS |
