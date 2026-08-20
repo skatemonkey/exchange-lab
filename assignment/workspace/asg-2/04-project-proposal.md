@@ -148,6 +148,8 @@ The internal implementation changes between configurations, but the input, requi
 | Readiness | Fresh application processes; health checks and Kafka partition assignments confirmed before testing |
 | Observation | Accepted and completed TPS, API latency, errors, dropped iterations, unfinished work, Kafka lag, and SQL/Redis correctness checks |
 
+*Table 1. Common experimental setup.*
+
 These environment, workload, readiness, measurement, and verification conditions remain fixed across the compared configurations.
 
 ### 8.3. Experimental Configurations
@@ -321,6 +323,8 @@ The synchronous MySQL configuration was tested before Kafka, in-memory matching,
 | 25 | 25.03 | 25.03 | 100.00% | 21.01 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 | 30 | 30.00 | 30.00 | 100.00% | 19.78 ms | 0 / 0 | 0 | 3/5 pass | Fail |
 
+*Table 2. C0 synchronous database baseline results.*
+
 #### 8.6.2. C1 Kafka-Based Sequential Processing
 
 The rebuilt three-service C1 configuration sustained 30 TPS in both confirmation runs. At 35 TPS, only 52.24% of accepted orders settled during the measurement period and unfinished order work remained after the fixed drain, so the higher rate failed.
@@ -329,6 +333,8 @@ The rebuilt three-service C1 configuration sustained 30 TPS in both confirmation
 |---:|---:|---:|---:|---:|---|---|---|---|
 | 30 | 30.02 | 30.00 | 99.95% | 18.95 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 | 35 | 35.03 | 18.30 | 52.24% | 33.83 ms | 0 / 0 | 308 | 5/5 pass | Fail |
+
+*Table 3. C1 Kafka-based sequential processing results.*
 
 #### 8.6.3. C2 In-Memory Order Matching
 
@@ -339,6 +345,8 @@ The rebuilt C2 configuration added a startup-rebuilt in-memory order book and su
 | 35 | 35.02 | 35.00 | 99.95% | 18.65 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 | 40 | 40.00 | 29.47 | 73.67% | 18.27 ms | 0 / 0 | 0 | 5/5 pass | Fail |
 
+*Table 4. C2 in-memory order matching results.*
+
 #### 8.6.4. C3 Redis-Based Reservation
 
 The rebuilt C3 configuration was tested using an automated fresh-start procedure. The procedure stopped all three applications, waited for old Kafka members to leave, reset MySQL and Redis, started fresh applications, and confirmed both Kafka partition assignments before k6. A 60 TPS run completed 96.78% in-window and therefore failed the 98% rule. The 55 TPS candidate passed twice with zero unfinished work, zero Kafka lag, and correct MySQL and Redis state.
@@ -347,6 +355,8 @@ The rebuilt C3 configuration was tested using an automated fresh-start procedure
 |---:|---:|---:|---:|---:|---|---|---|---|
 | 55 | 55.00 | 54.93 | 99.88% | 18.11 ms | 0 / 0 | 0 | 5/5 / 5/5 pass | Pass |
 | 60 | 60.00 | 58.07 | 96.78% | 17.78 ms | 0 / 0 | 0 | 5/5 / 5/5 pass | Fail |
+
+*Table 5. C3 Redis-based reservation results.*
 
 #### 8.6.5. Overall Comparison
 
@@ -358,6 +368,8 @@ The table compares the highest verified result for each configuration.
 | C1: Kafka sequential processing | 30 | 30.00 | +19.86% | Database matching became the bottleneck above 30 TPS |
 | C2: In-memory matching | 35 | 35.00 | +16.67% | In-memory matching improved throughput; finance database work became the next bottleneck |
 | C3: Redis reservation | 55 | 54.93 | +56.94% | Sustained 55 TPS with zero unfinished work and correct MySQL/Redis state |
+
+*Table 6. Overall configuration comparison.*
 
 ### 8.7. Discussion of Findings
 
@@ -374,6 +386,8 @@ The findings answer the research questions directly:
 | RQ1: Baseline sustainable TPS | The synchronous C0 configuration sustained 25 TPS. |
 | RQ2: Effective techniques and improvement | Kafka increased median completed TPS by 19.86%, in-memory matching by 16.67%, and Redis reservation by 56.94% over the preceding configuration. |
 | RQ3: Highest sustainable TPS | C3 achieved the highest verified target of 55 TPS, with median completed throughput of 54.93 TPS. |
+
+*Table 7. Research questions and experimental answers.*
 
 ### 8.8. Experimental Reliability and Limitations
 
