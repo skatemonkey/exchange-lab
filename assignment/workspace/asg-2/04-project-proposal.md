@@ -1,6 +1,4 @@
-# Assignment 2 Project Proposal
-
-> Project direction: [Assignment 2 Project Starting Point](02-project-core-idea.md)
+# End-to-End Techniques for Improving Sustainable Throughput in High-Concurrency Java Microservices
 
 > Table of Contents
 >
@@ -37,7 +35,7 @@
 
 ## Abstract
 
-High-concurrency transaction-processing systems must complete transactions reliably rather than only accept requests quickly. This project investigated how staged architectural improvements affected the sustainable completed transactions per second (TPS) of Exchange Lab, a Java backend modelled on a stock exchange. A controlled quantitative experiment compared four configurations under consistent workload and measurement conditions: a synchronous MySQL baseline, Kafka-based sequential processing, in-memory order matching, and Redis-based cash and stock reservation. Sustainable TPS required at least 98% of accepted asynchronous orders to settle within the 30-second measurement window, zero unfinished work and Kafka lag after draining, no request or iteration failures, and correct database and Redis state. The highest sustainable target increased from 25 TPS for the baseline to 30 TPS with Kafka, 35 TPS with in-memory matching, and 55 TPS with Redis reservation, producing a 120% overall increase. Redis reservation delivered the largest incremental improvement, while each preceding change exposed a new bottleneck elsewhere in the transaction path. The findings demonstrate the value of evaluating end-to-end completion and correctness after every performance change. Although the measured limits apply only to Exchange Lab, its synthetic workload, and the selected local environment, the experiment provides a repeatable approach for evaluating throughput improvements in transaction-processing systems.
+High-concurrency transaction-processing systems must complete transactions reliably rather than only accept requests quickly. This project investigated how staged architectural improvements affected the sustainable completed transactions per second (TPS) of Exchange Lab, a Java backend modelled on a stock exchange. A controlled quantitative experiment compared four configurations under consistent workload and measurement conditions: a synchronous MySQL baseline, Kafka-based sequential processing, in-memory order matching, and Redis-based cash and stock reservation. A rate was considered sustainable only when at least 98% of accepted asynchronous orders settled within the 30-second measurement window, the drain left zero unfinished work and zero Kafka lag, no request or iteration failed, and the database and Redis state remained correct. The highest sustainable target increased from 25 TPS for the baseline to 30 TPS with Kafka, 35 TPS with in-memory matching, and 55 TPS with Redis reservation, producing a 120% overall increase. Redis reservation delivered the largest incremental improvement, while each preceding change exposed a new bottleneck elsewhere in the transaction path. The findings demonstrate the value of evaluating end-to-end completion and correctness after every performance change. Although the measured limits apply only to Exchange Lab, its synthetic workload, and the selected local environment, the experiment provides a repeatable approach for evaluating throughput improvements in transaction-processing systems.
 
 ## 1. Introduction
 
@@ -47,7 +45,7 @@ Many areas of a system can be improved to increase TPS, including the applicatio
 
 The selected experimental system is Exchange Lab, a backend system modelled on a stock exchange. It supports limit buy and sell orders, in which a trader specifies the stock symbol, quantity, and maximum buying price or minimum selling price. Processing an order may require the system to reserve the trader's cash or stock, match compatible orders by price and submission time, record the resulting trade, and settle the affected balances. The system is used as a transaction-processing testbed; the research does not attempt to reproduce every function of a commercial stock exchange.
 
-This research measures the system's baseline TPS and evaluates Kafka, in-memory matching, and Redis reservation one at a time. Each configuration is tested using the same workload and pass rules to show how far sustainable completed TPS increases within the defined environment. Response time, errors, unfinished work, and correctness ensure that a higher TPS remains stable and meaningful. The following sections explain the research background, problem, questions, aim, objectives, scope, and significance before presenting the methodology, results, and research plan.
+This research measures the system's baseline TPS and evaluates Kafka, in-memory matching, and Redis reservation one at a time. Each configuration was tested using the same workload and pass rules to show how far sustainable completed TPS increased within the defined environment. Latency, errors, unfinished work, and correctness are used to confirm that a higher TPS remains stable and meaningful. The following sections explain the research background, problem, questions, aim, objectives, scope, and significance before presenting the methodology, results, and research plan.
 
 ## 2. Research Background
 
@@ -274,7 +272,7 @@ flowchart LR
 
 - Load the required configuration from its recorded Git commit or an isolated worktree and start its required infrastructure.
 - Keep MySQL and Kafka running between measured rates. Before every rate, stop the active application processes, wait until the old Kafka consumers have left their groups, confirm zero Kafka lag, reset MySQL and Redis where applicable, and load the same seed data.
-- Start the single C0 application or, for C1-C3, start finance, match, and exchange services. Health endpoints alone do not prove Kafka readiness, so both new consumer groups must own their partitions with zero lag before the fixed readiness delay and k6 begin. Do not reuse any application process between measured rates.
+- Start the single C0 application or, for C1-C3, start finance, match, and exchange services. Health endpoints alone do not prove Kafka readiness, so both new consumer groups must own their partitions with zero lag before the fixed readiness delay starts. Begin k6 only after that delay. Do not reuse any application process between measured rates.
 
 #### Phase 2: Run the Load Test
 
@@ -285,7 +283,7 @@ flowchart LR
 #### Phase 3: Verify and Record the Result
 
 - Use SQL checks to verify cash, stock, reservations, order states, and trade records. Discard the run if the data is incorrect or the system is unstable.
-- Repeat each selected test at least twice under the same conditions.
+- Repeat the highest passing rate at least twice under the same conditions.
 - Store the verified setup and results for analysis.
 
 ### 8.5. Measurement and Data Analysis
@@ -302,7 +300,7 @@ A tested rate passes only when:
 
 For asynchronous C1-C3, keeping pace means that at least 98% of accepted orders complete during the measurement period, while the drain period must leave zero unfinished orders and zero Kafka lag.
 
-Each result row represents one tested request rate. Formal values are the medians from the confirmation runs under the same conditions. The sustainable TPS of a configuration is the highest target rate that passes at least two repeated confirmation runs.
+Each result row represents one tested request rate. The passing row for each configuration reports the median of its confirmation runs, while the failed row reports the nearest tested rate that did not meet the pass rules. The sustainable TPS of a configuration is the highest target rate that passes at least two repeated confirmation runs.
 
 The improvement between consecutive configurations is calculated as follows:
 
@@ -312,7 +310,7 @@ TPS improvement = (new sustainable TPS - previous sustainable TPS) / previous su
 
 ### 8.6. Experimental Results
 
-The following results show the highest passing rate and the nearest failed rate for each configuration. Detailed rate-search and confirmation runs are retained in the supporting load-test results.
+The following results show the highest passing rate and the nearest failed rate for each configuration. Detailed rate-search and confirmation runs are retained in the project records.
 
 #### 8.6.1. C0 Synchronous Database Baseline
 
@@ -363,7 +361,7 @@ The table compares the highest verified result for each configuration.
 
 ### 8.7. Discussion of Findings
 
-The staged experiment increased the highest sustainable target from 25 TPS in C0 to 55 TPS in C3, an overall increase of 120%. More importantly, every passing configuration maintained the required completion ratio, cleared unfinished work, and passed its correctness checks. The result therefore represents increased end-to-end transaction completion rather than faster request acceptance alone.
+The highest sustainable target increased from 25 TPS in C0 to 55 TPS in C3, an overall increase of 120%. More importantly, every passing configuration maintained the required completion ratio, cleared unfinished work, and passed its correctness checks. The result therefore represents increased end-to-end transaction completion rather than faster request acceptance alone.
 
 C0 established that the synchronous MySQL implementation sustained 25 TPS. Although the 30 TPS run completed its requests, it failed the cash and stock conservation checks, showing that throughput cannot be accepted when transaction correctness is lost. C1 raised the verified result to 30 TPS by separating order intake, matching, and settlement through Kafka. Its 35 TPS run accumulated unfinished matching work, indicating that database-backed matching had become the next bottleneck.
 
@@ -379,9 +377,9 @@ The findings answer the research questions directly:
 
 ### 8.8. Experimental Reliability and Limitations
 
-The comparison was made repeatable by using the same machine, seed data, workload, measurement period, and pass rules for every configuration. Application processes and state were reset before each measured rate, and the highest passing asynchronous rate was confirmed twice. Completed settlements were measured instead of accepted requests, while the completion ratio, Kafka lag, errors, and SQL/Redis checks prevented queued or incorrect work from being reported as sustainable throughput.
+The comparison was made repeatable by using the same machine, seed data, workload, measurement period, and pass rules for every configuration. Application processes, MySQL test data, and Redis state where applicable were reset before each measured rate, and the highest passing asynchronous rate was confirmed twice. Completed settlements were measured instead of accepted requests, while the completion ratio, Kafka lag, errors, and SQL/Redis checks prevented queued or incorrect work from being reported as sustainable throughput.
 
-The experiment used only synthetic accounts, balances, stock positions, and orders; it involved no people, personal data, real money, or live market activity. Its results are limited to Exchange Lab, the selected workload, one local machine, and 30-second measurement windows. The reported TPS values therefore support comparison between C0-C3 but should not be treated as universal limits for Java, Kafka, Redis, MySQL, or commercial exchanges.
+The experiment used only synthetic accounts, balances, stock positions, and orders; it involved no human participants, personal data, real money, or live market activity. Its results are limited to Exchange Lab, the selected workload, one local machine, and 30-second measurement windows. The reported TPS values therefore support comparison between C0-C3 but should not be treated as universal limits for Java, Kafka, Redis, MySQL, or commercial exchanges.
 
 ## 9. Research Plan
 
@@ -398,8 +396,6 @@ This project examined how staged architectural improvements affected the sustain
 The highest sustainable target increased from 25 TPS in C0 to 30 TPS in C1, 35 TPS in C2, and 55 TPS in C3. This represents a 120% increase over the baseline, with Redis reservation producing the largest incremental improvement. The findings also showed that each change moved the performance constraint to another part of the transaction path, confirming the importance of measuring the complete system after every improvement. Although the measured limits apply only to Exchange Lab and its controlled test environment, the project provides a repeatable approach for selecting, applying, and evaluating throughput improvements while preserving transaction correctness.
 
 ## 11. References
-
-Avritzer, A., Janes, A., Rodrigues, H., Cai, Y., Schoyen, T., Pisch, E., Trubiani, C., Bondi, A. B., Menasché, D. S., & Zhang, C. (2026). Automated assessment of the relationship between microservice architectures and performance. *Journal of Systems and Software, 237*, Article 112857. https://doi.org/10.1016/j.jss.2026.112857
 
 Henning, S., & Hasselbring, W. (2024). Benchmarking scalability of stream processing frameworks deployed as microservices in the cloud. *Journal of Systems and Software, 208*, Article 111879. https://doi.org/10.1016/j.jss.2023.111879
 
