@@ -8,11 +8,11 @@ The previous C1-C3 measurements were discarded because they tested older single-
 
 | Field | Value |
 |---|---|
-| Test date | C0: 19 August 2026; C1: 20 August 2026; C2-C3: pending |
+| Test date | C0: 19 August 2026; C1-C2: 20 August 2026; C3: pending |
 | Machine and operating system | Windows 11 Enterprise 10.0.26200; AMD Ryzen 7 7800X3D; 16 logical processors; 31.1 GB RAM |
 | Java and JVM settings | OpenJDK 26.0.1; default JVM settings |
 | k6 version | 2.2.0 |
-| Warm-up period | C1: 10-second readiness delay after all health checks; no traffic warm-up |
+| Warm-up period | C1-C2: 10-second readiness delay after all health checks; no traffic warm-up |
 | Startup readiness | Finance, match, and exchange health endpoints must pass before k6 starts |
 | Measurement period | 30 seconds per run |
 | Drain period | C0: 0 seconds; rebuilt C1-C3: 5 seconds |
@@ -30,7 +30,7 @@ The previous C1-C3 measurements were discarded because they tested older single-
 |---|---|---|---|
 | C0 | `567b63b` | Synchronous processing with MySQL | Tested |
 | C1 | `0739e88` | Three-service Kafka pipeline with database matching | Tested |
-| C2 | `edd50d6` | C1 with in-memory order matching | Awaiting retest |
+| C2 | `edd50d6` | C1 with in-memory order matching | Tested |
 | C3 | `fb57885` | C2 with Redis reservation and startup preload | Awaiting retest |
 
 ## 3. C0 Results
@@ -84,11 +84,28 @@ The verified C1 score is **30 TPS**. The two confirmation runs produced a median
 
 ## 5. C2 Results
 
-**Pending.** Retest C1 after adding the startup-rebuilt in-memory order book.
+### Rate Search
 
-| Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
-|---:|---:|---:|---:|---|---|---|---|
-| Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+C2 passed its first 40 TPS run, but a fresh 40 TPS repetition failed the 98% completion rule. Therefore, 40 TPS was rejected and the candidate was reduced to 35 TPS.
+
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag (order / trade) | Errors / drops | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Initial rate | 40 | 40.03 | 40.00 | 99.92% | 25.96 ms | 1 | 0 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+| Higher rate | 50 | 50.03 | 29.27 | 58.49% | 17.15 ms | 321 | 302 | 297 / 2 | 0 / 0 | 5/5 pass | Fail |
+| Smaller step | 45 | 44.97 | 40.77 | 90.66% | 18.02 ms | 126 | 0 | 0 / 0 | 1 / 0 | 5/5 pass | Fail |
+| Repeatability check | 40 | 40.00 | 29.47 | 73.67% | 18.27 ms | 316 | 0 | 0 / 0 | 0 / 0 | 5/5 pass | Fail |
+| Revised candidate | 35 | 35.00 | 35.00 | 100.00% | 18.68 ms | 0 | 0 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+
+### Final TPS Confirmation
+
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag (order / trade) | Errors / drops | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Confirmation 1 | 35 | 35.00 | 35.00 | 100.00% | 18.96 ms | 0 | 0 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+| Confirmation 2 | 35 | 35.03 | 35.00 | 99.90% | 18.34 ms | 1 | 0 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+
+### Conclusion
+
+The verified C2 score is **35 TPS**. The two confirmation runs produced a median completed throughput of **35.00 TPS** and a median p95 latency of **18.65 ms**. In-memory matching raised repeatable throughput above C1, but the database-backed reservation and settlement work still limited the complete pipeline.
 
 ## 6. C3 Results
 
@@ -104,7 +121,7 @@ The verified C1 score is **30 TPS**. The two confirmation runs produced a median
 |---|---:|---:|---:|---|
 | C0 | 25 | 25.03 | Baseline | Existing synchronous baseline |
 | C1 | 30 | 30.00 | +19.86% | Kafka improves intake isolation, but database matching becomes the bottleneck above 30 TPS |
-| C2 | Pending | Pending | Pending | Awaiting multi-stage retest |
+| C2 | 35 | 35.00 | +16.67% | In-memory matching improves throughput, while finance database work becomes the next bottleneck |
 | C3 | Pending | Pending | Pending | Awaiting multi-stage retest |
 
 ## 8. Invalid Runs and Notes
