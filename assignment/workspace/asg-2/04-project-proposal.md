@@ -263,9 +263,9 @@ flowchart LR
 
 #### Phase 1: Prepare the Configuration
 
-- Load the required configuration from its recorded Git commit or an isolated worktree, build it, and start its required components.
-- Reset MySQL, Kafka, and Redis where applicable, then load the same trader accounts, stock positions, and initial sell orders.
-- Confirm that the system is healthy, complete the fixed JVM warm-up, and record the environment and test settings.
+- Load the required configuration from its recorded Git commit or an isolated worktree and start its required infrastructure.
+- Before every measured rate, stop the application, confirm that Kafka has no remaining backlog, reset MySQL and Redis where applicable, load the same seed data, and start a new application process.
+- Confirm that the application, Kafka consumer, and in-memory state are ready before k6 starts. Do not reuse an application process between measured rates.
 
 #### Phase 2: Run the Load Test
 
@@ -305,19 +305,19 @@ The synchronous MySQL configuration was tested before Kafka, in-memory matching,
 
 #### 8.5.2. C1 Kafka-Based Sequential Processing
 
-Kafka-based sequential processing increased the verified target from 25 TPS to 60 TPS. A 65 TPS test was not repeatable, so it was rejected and 60 TPS was confirmed in three runs.
+Under the corrected restart-before-every-rate protocol, Kafka-based sequential processing achieved a verified target of 50 TPS. The 55 TPS test failed the 98% completion rule, while all three 50 TPS confirmation runs passed.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| 60 | 60.00 | 59.80 | 6.38 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| 50 | 50.03 | 49.97 | 7.12 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 
 #### 8.5.3. C2 In-Memory Order Matching
 
-Adding the in-memory order book to C1 produced a verified target of 50 TPS. All three 50 TPS confirmation runs passed, while 55 TPS failed because completed processing did not keep pace with accepted orders.
+Adding the in-memory order book produced the same verified target of 50 TPS. All three 50 TPS confirmation runs passed, while 55 TPS failed because completed processing did not keep pace with accepted orders.
 
 | Target TPS | Accepted TPS | Completed TPS | p95 latency | Errors / dropped iterations | Unfinished work after drain | SQL checks | Decision |
 |---:|---:|---:|---:|---|---|---|---|
-| 50 | 50.00 | 49.97 | 7.06 ms | 0 / 0 | 0 | 5/5 pass | Pass |
+| 50 | 50.03 | 49.97 | 6.89 ms | 0 / 0 | 0 | 5/5 pass | Pass |
 
 #### 8.5.4. C3 Redis-Based Reservation
 
@@ -334,8 +334,8 @@ The table compares the highest verified result currently available for each conf
 | Configuration | Highest passing target TPS | Median completed TPS | Change from previous configuration | Finding |
 |---|---:|---:|---:|---|
 | C0: Synchronous database baseline | 25 | 25.03 | Baseline | Verified at 5-TPS boundary resolution |
-| C1: Kafka sequential processing | 60 | 59.80 | +140% | Kafka increased intake capacity, while database processing remained sequential |
-| C2: In-memory matching | 50 | 49.97 | -16.7% | In-memory matching did not improve end-to-end capacity in this implementation |
+| C1: Kafka sequential processing | 50 | 49.97 | Not directly comparable until C0 is retested | Corrected result using a fresh application process for every rate |
+| C2: In-memory matching | 50 | 49.97 | 0.0% | In-memory matching matched C1's sustainable rate but did not raise the 5-TPS boundary |
 | C3: Redis reservation | To be measured | To be measured | To be calculated | To be recorded |
 
 The improvement between consecutive configurations will be calculated as follows:
