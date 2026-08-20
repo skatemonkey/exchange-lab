@@ -69,13 +69,15 @@ The initial rates located the processing limit, and smaller steps narrowed it. T
 | Smaller step | 65 | 65.00 | 63.70 | 98.00% | 6.35 ms | 39 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
 | 65 TPS confirmation | 65 | 65.00 | 63.47 | 97.64% | 6.40 ms | 46 | 0 | 0 | 0 / 0 | 5/5 pass | Fail |
 
-### 60 TPS Confirmation
+### Final TPS Confirmation
 
-| Run | Target TPS | Accepted TPS | Completed TPS | p95 latency | Completed during drain | Unfinished work / Kafka lag | Errors / dropped iterations | SQL checks | Decision |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Confirmation 1 | 60 | 60.00 | 59.80 | 6.38 ms | 6 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
-| Confirmation 2 | 60 | 60.03 | 59.80 | 6.40 ms | 7 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
-| Confirmation 3 | 60 | 60.00 | 59.73 | 6.37 ms | 8 | 0 / 0 | 0 / 0 | 5/5 pass | Pass |
+| Test | Target TPS | Accepted TPS | Completed TPS | Completion ratio | p95 latency | Completed during drain | Unfinished after drain | Kafka lag | Errors / drops | SQL checks | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Confirmation 1 | 60 | 60.00 | 59.80 | 99.67% | 6.38 ms | 6 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+| Confirmation 2 | 60 | 60.03 | 59.80 | 99.61% | 6.40 ms | 7 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+| Confirmation 3 | 60 | 60.00 | 59.73 | 99.56% | 6.37 ms | 8 | 0 | 0 | 0 / 0 | 5/5 pass | Pass |
+
+### Conclusion
 
 The verified C1 score is **60 TPS**. The three confirmation runs produced a median completed throughput of **59.80 TPS** and a median p95 API latency of **6.38 ms**.
 
